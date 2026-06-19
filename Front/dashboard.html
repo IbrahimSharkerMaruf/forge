@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Forge</title>
+<script src="theme.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+</head>
+<body>
+
+<header>
+  <nav>
+    <a href="forge_landing_page.html" class="logo">forge<span>.</span></a>
+    <div class="nav-links">
+      <a href="forge_landing_page.html#preview">Salary tool</a>
+      <a href="projects.html">Projects</a>
+      <a href="#admin-panel" id="admin-link" style="display:none;">Admin panel</a>
+    </div>
+    <div class="avatar-wrap" id="avatar-wrap">
+      <button class="avatar-btn" id="avatar-btn" type="button" aria-label="Open account menu">
+        <span id="avatar-initials">—</span>
+      </button>
+      <div class="avatar-menu" id="avatar-menu">
+        <a href="dashboard.html" class="menu-item">Profile dashboard</a>
+        <button class="menu-item" id="menu-theme-btn" type="button">
+          <span>Theme</span>
+          <span class="menu-theme-icons">
+            <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+            <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+          </span>
+        </button>
+        <button class="menu-item menu-item-danger" id="menu-logout-btn" type="button">Log out</button>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<div class="wrap dash-shell">
+  <div class="dash-head">
+    <h1 id="welcome-msg">Welcome back</h1>
+    <span class="role-badge" id="role-badge">user</span>
+  </div>
+
+  <div class="dash-grid">
+    <div class="dash-card">
+      <div class="label">Your profile</div>
+      <div class="field-input">
+        <label for="pf-name">Name</label>
+        <input type="text" id="pf-name">
+      </div>
+      <div class="field-input">
+        <label>Email</label>
+        <input type="text" id="pf-email" disabled>
+      </div>
+      <div class="field-input">
+        <label for="pf-github">GitHub URL</label>
+        <input type="url" id="pf-github" placeholder="https://github.com/yourname">
+      </div>
+      <div class="field-input">
+        <label for="pf-linkedin">LinkedIn URL</label>
+        <input type="url" id="pf-linkedin" placeholder="https://linkedin.com/in/yourname">
+      </div>
+      <button class="btn-primary" id="save-profile-btn" style="margin-top:18px;">Save profile</button>
+      <div class="form-error" id="profile-error"></div>
+      <div class="form-note" id="profile-note">Saved.</div>
+    </div>
+
+    <div class="dash-card">
+      <div class="label">Public profile preview</div>
+      <p style="color:var(--paper-dim);font-size:14px;margin-bottom:14px;">This is what other Forge users see on your profile card.</p>
+      <div class="field" style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);">
+        <span style="color:var(--paper-dim);">Name</span><span id="preview-name" style="font-weight:500;">—</span>
+      </div>
+      <div class="field" style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);">
+        <span style="color:var(--paper-dim);">GitHub</span><a id="preview-github" target="_blank" style="font-weight:500;color:var(--steel);">—</a>
+      </div>
+      <div class="field" style="display:flex;justify-content:space-between;padding:10px 0;">
+        <span style="color:var(--paper-dim);">LinkedIn</span><a id="preview-linkedin" target="_blank" style="font-weight:500;color:var(--steel);">—</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="dash-card" id="admin-panel" style="display:none;">
+    <div class="label">Admin panel — all users</div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="users-table-body"></tbody>
+      </table>
+    </div>
+    <div class="form-error" id="admin-error"></div>
+  </div>
+</div>
+
+<script src="auth.js"></script>
+<script src="account-menu.js"></script>
+<script>
+  initThemeToggle('menu-theme-btn');
+  let currentUser = null;
+
+  const avatarWrap = document.getElementById('avatar-wrap');
+  const avatarMenu = document.getElementById('avatar-menu');
+  document.getElementById('avatar-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    avatarMenu.classList.toggle('open');
+  });
+  document.addEventListener('click', (e) => {
+    if (!avatarWrap.contains(e.target)) avatarMenu.classList.remove('open');
+  });
+  document.getElementById('menu-theme-btn').addEventListener('click', () => {
+    avatarMenu.classList.remove('open');
+  });
+  document.getElementById('menu-logout-btn').addEventListener('click', () => {
+    clearToken();
+    window.location.href = 'login.html';
+  });
+
+  function renderProfile(user) {
+    document.getElementById('welcome-msg').textContent = `Welcome back, ${user.name}`;
+    document.getElementById('avatar-initials').textContent = initialsFor(user.name);
+    const badge = document.getElementById('role-badge');
+    badge.textContent = user.role;
+    badge.classList.toggle('admin', user.role === 'admin');
+
+    document.getElementById('pf-name').value = user.name;
+    document.getElementById('pf-email').value = user.email;
+    document.getElementById('pf-github').value = user.github_url || '';
+    document.getElementById('pf-linkedin').value = user.linkedin_url || '';
+
+    document.getElementById('preview-name').textContent = user.name;
+    const ghLink = document.getElementById('preview-github');
+    const liLink = document.getElementById('preview-linkedin');
+    ghLink.textContent = user.github_url || 'Not set';
+    ghLink.href = user.github_url || '#';
+    liLink.textContent = user.linkedin_url || 'Not set';
+    liLink.href = user.linkedin_url || '#';
+
+    if (user.role === 'admin') {
+      document.getElementById('admin-link').style.display = '';
+      document.getElementById('admin-panel').style.display = '';
+      loadUsers();
+    }
+  }
+
+  async function loadUsers() {
+    const tbody = document.getElementById('users-table-body');
+    const adminError = document.getElementById('admin-error');
+    adminError.style.display = 'none';
+    try {
+      const users = await apiFetch('/admin/users');
+      tbody.innerHTML = users.map(u => `
+        <tr data-id="${u.id}">
+          <td>${u.name}</td>
+          <td>${u.email}</td>
+          <td>
+            <select class="pill-select role-select" ${u.id === currentUser.id ? 'disabled' : ''}>
+              <option value="user" ${u.role === 'user' ? 'selected' : ''}>user</option>
+              <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>admin</option>
+            </select>
+          </td>
+          <td>${u.is_banned ? '<span class="banned-tag">Banned</span>' : 'Active'}</td>
+          <td class="row-actions">
+            <button class="btn-secondary ban-btn" ${u.id === currentUser.id ? 'disabled' : ''}>${u.is_banned ? 'Unban' : 'Ban'}</button>
+            <button class="btn-danger delete-btn" ${u.id === currentUser.id ? 'disabled' : ''}>Delete</button>
+          </td>
+        </tr>
+      `).join('');
+
+      tbody.querySelectorAll('tr').forEach(row => {
+        const id = row.dataset.id;
+        row.querySelector('.role-select').addEventListener('change', (e) => updateUser(id, { role: e.target.value }));
+        row.querySelector('.ban-btn').addEventListener('click', () => {
+          const isBanned = row.querySelector('.banned-tag') !== null;
+          updateUser(id, { is_banned: !isBanned });
+        });
+        row.querySelector('.delete-btn').addEventListener('click', () => {
+          if (confirm('Delete this user permanently?')) deleteUser(id);
+        });
+      });
+    } catch (err) {
+      adminError.textContent = err.message;
+      adminError.style.display = 'block';
+    }
+  }
+
+  async function updateUser(id, patch) {
+    const adminError = document.getElementById('admin-error');
+    adminError.style.display = 'none';
+    try {
+      await apiFetch(`/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify(patch) });
+      loadUsers();
+    } catch (err) {
+      adminError.textContent = err.message;
+      adminError.style.display = 'block';
+    }
+  }
+
+  async function deleteUser(id) {
+    const adminError = document.getElementById('admin-error');
+    adminError.style.display = 'none';
+    try {
+      await apiFetch(`/admin/users/${id}`, { method: 'DELETE' });
+      loadUsers();
+    } catch (err) {
+      adminError.textContent = err.message;
+      adminError.style.display = 'block';
+    }
+  }
+
+  document.getElementById('save-profile-btn').addEventListener('click', async () => {
+    const errorBox = document.getElementById('profile-error');
+    const noteBox = document.getElementById('profile-note');
+    errorBox.style.display = 'none';
+    noteBox.style.display = 'none';
+    try {
+      const updated = await apiFetch('/users/me', {
+        method: 'PATCH',
+        body: JSON.stringify({
+          name: document.getElementById('pf-name').value,
+          github_url: document.getElementById('pf-github').value,
+          linkedin_url: document.getElementById('pf-linkedin').value,
+        }),
+      });
+      currentUser = updated;
+      renderProfile(updated);
+      noteBox.style.display = 'block';
+    } catch (err) {
+      errorBox.textContent = err.message;
+      errorBox.style.display = 'block';
+    }
+  });
+
+  (async () => {
+    currentUser = await requireLogin();
+    if (currentUser) renderProfile(currentUser);
+  })();
+</script>
+</body>
+</html>

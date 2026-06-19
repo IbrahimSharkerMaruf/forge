@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Projects — Forge</title>
+<script src="theme.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+</head>
+<body>
+
+<header>
+  <nav>
+    <a href="forge_landing_page.html" class="logo">forge<span>.</span></a>
+    <div class="nav-links">
+      <a href="forge_landing_page.html#preview">Salary tool</a>
+      <a href="projects.html">Projects</a>
+      <a href="login.html" id="nav-login-link" class="logged-out-only">Log in</a>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;" class="logged-out-only">
+      <button class="theme-toggle" id="theme-toggle-btn" type="button" aria-label="Toggle light/dark theme">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
+      <a href="signup.html" class="nav-cta" id="nav-cta-btn">Get early access</a>
+    </div>
+    <div class="avatar-wrap" id="avatar-wrap" style="display:none;"></div>
+  </nav>
+</header>
+
+<div class="wrap projects-shell">
+  <div class="projects-head">
+    <div>
+      <h1>Project collaboration</h1>
+      <p style="color:var(--paper-dim);font-size:14px;margin-top:6px;max-width:520px;">
+        Post an unfinished idea and find someone to help for credit, or browse what others are building.
+      </p>
+    </div>
+    <a href="new-project.html" class="btn-primary" id="new-project-link">
+      New project
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </a>
+  </div>
+
+  <div class="filter-tabs">
+    <button class="filter-tab active" data-filter="open">Open</button>
+    <button class="filter-tab" data-filter="completed">Completed</button>
+    <button class="filter-tab" data-filter="mine">My projects</button>
+    <button class="filter-tab" data-filter="applied">My applications</button>
+  </div>
+
+  <div id="project-grid" class="project-grid">
+    <p class="empty-state">Loading projects…</p>
+  </div>
+</div>
+
+<script src="auth.js"></script>
+<script src="account-menu.js"></script>
+<script>
+  initThemeToggle('theme-toggle-btn');
+  setupAccountMenu();
+
+  let activeFilter = 'open';
+
+  function initialsForName(name) {
+    const parts = name.trim().split(/\s+/);
+    return parts.length > 1
+      ? (parts[0][0] + parts[1][0]).toUpperCase()
+      : name.slice(0, 2).toUpperCase();
+  }
+
+  function projectCard(p) {
+    const skillTags = p.skills.map(s => `<span class="skill-tag">${s}</span>`).join('');
+    return `
+      <a href="project.html?id=${p.id}" class="project-card">
+        <div class="project-meta">
+          <span class="status-tag ${p.status}">${p.status}</span>
+          <span>${p.applicant_count} applicant${p.applicant_count === 1 ? '' : 's'}</span>
+        </div>
+        <h3>${p.title}</h3>
+        <p>${p.description.length > 140 ? p.description.slice(0, 140) + '…' : p.description}</p>
+        <div class="skill-tags">${skillTags}</div>
+        <div class="project-meta">By ${p.owner.name}</div>
+      </a>
+    `;
+  }
+
+  async function loadProjects(filter) {
+    const grid = document.getElementById('project-grid');
+    grid.innerHTML = '<p class="empty-state">Loading projects…</p>';
+
+    let path = '/projects';
+    if (filter === 'open') path += '?status=open';
+    else if (filter === 'completed') path += '?status=completed';
+    else if (filter === 'mine') path += '?mine=true';
+    else if (filter === 'applied') path += '?applied=true';
+
+    try {
+      const projects = await apiFetch(path);
+      if (projects.length === 0) {
+        grid.innerHTML = '<p class="empty-state">Nothing here yet.</p>';
+        return;
+      }
+      grid.innerHTML = projects.map(projectCard).join('');
+    } catch (err) {
+      grid.innerHTML = `<p class="empty-state">${err.message.includes('401') || err.message.toLowerCase().includes('login') ? 'Log in to see this.' : err.message}</p>`;
+    }
+  }
+
+  document.querySelectorAll('.filter-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      activeFilter = tab.dataset.filter;
+      loadProjects(activeFilter);
+    });
+  });
+
+  loadProjects(activeFilter);
+</script>
+</body>
+</html>

@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forge — Build together. Get paid right. Get hired.</title>
+<script src="theme.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0E0F12;
+    --ink-2:#15171C;
+    --ink-3:#1C1F26;
+    --paper:#F5F3EE;
+    --paper-dim:#C9C6BD;
+    --amber:#FF7A3D;
+    --amber-dim:#7A3D1F;
+    --steel:#5B8DB8;
+    --steel-dim:#2E4057;
+    --muted:#8B8780;
+    --line:rgba(245,243,238,0.10);
+    --line-2:rgba(245,243,238,0.16);
+    --header-bg:rgba(14,15,18,0.72);
+    --ink-fixed:#0E0F12;
+    --paper-fixed:#F5F3EE;
+  }
+
+  :root[data-theme="light"]{
+    --ink:#F7F5F0;
+    --ink-2:#FFFFFF;
+    --ink-3:#ECE9E2;
+    --paper:#15171C;
+    --paper-dim:#5B5852;
+    --muted:#7A766E;
+    --line:rgba(20,18,15,0.10);
+    --line-2:rgba(20,18,15,0.18);
+    --header-bg:rgba(247,245,240,0.78);
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+
+  body{
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'Inter',sans-serif;
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  ::selection{background:var(--amber);color:var(--ink-fixed);}
+
+  a{color:inherit;text-decoration:none;}
+  ul{list-style:none;}
+
+  .wrap{max-width:1240px;margin:0 auto;padding:0 32px;}
+
+  h1,h2,h3,h4{font-family:'Fraunces',serif;font-weight:500;letter-spacing:-0.01em;}
+
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--amber);
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .eyebrow::before{
+    content:'';
+    width:18px;height:1px;
+    background:var(--amber);
+  }
+
+  /* ===== NAV ===== */
+  header{
+    position:fixed;top:0;left:0;right:0;
+    z-index:100;
+    backdrop-filter:blur(14px);
+    background:var(--header-bg);
+    border-bottom:1px solid var(--line);
+  }
+  nav{
+    max-width:1240px;margin:0 auto;padding:20px 32px;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .logo{
+    font-family:'Fraunces',serif;
+    font-size:22px;
+    font-weight:600;
+    display:flex;align-items:center;gap:8px;
+    letter-spacing:-0.02em;
+  }
+  .logo span{color:var(--amber);}
+  .nav-links{display:flex;gap:36px;align-items:center;}
+  .nav-links a{
+    font-size:14.5px;color:var(--paper-dim);
+    transition:color .2s ease;
+  }
+  .nav-links a:hover{color:var(--paper);}
+  .theme-toggle{
+    width:38px;height:38px;border-radius:50%;
+    border:1px solid var(--line-2);background:transparent;color:var(--paper);
+    display:inline-flex;align-items:center;justify-content:center;cursor:pointer;
+    transition:border-color .2s ease, background .2s ease;
+  }
+  .theme-toggle:hover{border-color:var(--paper-dim);background:rgba(127,127,127,0.08);}
+  .theme-toggle svg{width:18px;height:18px;}
+  .theme-toggle .icon-moon{display:none;}
+  :root[data-theme="light"] .theme-toggle .icon-sun{display:none;}
+  :root[data-theme="light"] .theme-toggle .icon-moon{display:block;}
+
+  .avatar-wrap{position:relative;}
+  .avatar-btn{
+    width:40px;height:40px;border-radius:50%;border:none;cursor:pointer;
+    background:var(--amber);color:var(--ink-fixed);
+    font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;letter-spacing:0.02em;
+    display:flex;align-items:center;justify-content:center;
+    transition:transform .2s ease;
+  }
+  .avatar-btn:hover{transform:translateY(-1px);}
+  .avatar-menu{
+    position:absolute;top:calc(100% + 10px);right:0;
+    width:210px;background:var(--ink-2);border:1px solid var(--line-2);
+    border-radius:14px;padding:8px;box-shadow:0 24px 50px -20px rgba(0,0,0,0.5);
+    display:none;flex-direction:column;gap:2px;z-index:200;
+  }
+  .avatar-menu.open{display:flex;}
+  .menu-item{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    width:100%;padding:10px 12px;border-radius:8px;border:none;background:transparent;
+    color:var(--paper);font-size:14px;font-family:'Inter',sans-serif;text-align:left;
+    cursor:pointer;transition:background .15s ease;
+  }
+  .menu-item:hover{background:var(--ink-3);}
+  .menu-item-danger{color:#ff8b8b;}
+  .menu-theme-icons{display:inline-flex;color:var(--paper-dim);}
+  .menu-theme-icons svg{width:16px;height:16px;}
+  .menu-theme-icons .icon-moon{display:none;}
+  :root[data-theme="light"] .menu-theme-icons .icon-sun{display:none;}
+  :root[data-theme="light"] .menu-theme-icons .icon-moon{display:block;}
+
+  .nav-cta{
+    background:var(--paper-fixed);
+    color:var(--ink-fixed);
+    padding:10px 22px;
+    border-radius:100px;
+    font-size:14px;
+    font-weight:600;
+    transition:transform .2s ease, background .2s ease;
+  }
+  .nav-cta:hover{background:var(--amber);transform:translateY(-1px);}
+
+  @media (max-width:860px){
+    .nav-links{display:none;}
+  }
+
+  /* ===== HERO ===== */
+  .hero{
+    position:relative;
+    padding:188px 0 120px;
+    overflow:hidden;
+  }
+  .hero::before{
+    content:'';
+    position:absolute;
+    top:-260px;left:50%;
+    transform:translateX(-50%);
+    width:1100px;height:700px;
+    background:radial-gradient(ellipse at center, rgba(255,122,61,0.16) 0%, rgba(91,141,184,0.08) 45%, transparent 72%);
+    pointer-events:none;
+    filter:blur(10px);
+  }
+  .hero-grid{
+    position:relative;
+    display:grid;
+    grid-template-columns:1.05fr 0.95fr;
+    gap:64px;
+    align-items:center;
+  }
+  @media (max-width:980px){
+    .hero-grid{grid-template-columns:1fr;}
+  }
+
+  .hero h1{
+    font-size:clamp(40px,5.6vw,72px);
+    line-height:1.03;
+    margin:22px 0 26px;
+    color:var(--paper);
+  }
+  .hero h1 em{
+    font-style:italic;
+    color:var(--amber);
+    font-weight:500;
+  }
+  .hero p.lede{
+    font-size:18px;
+    line-height:1.65;
+    color:var(--paper-dim);
+    max-width:480px;
+    margin-bottom:36px;
+  }
+
+  .hero-ctas{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:46px;}
+  .btn-primary{
+    background:var(--amber);
+    color:var(--ink-fixed);
+    padding:15px 28px;
+    border-radius:100px;
+    font-weight:700;
+    font-size:15px;
+    display:inline-flex;align-items:center;gap:8px;
+    transition:transform .2s ease, box-shadow .2s ease;
+    box-shadow:0 0 0 0 rgba(255,122,61,0.4);
+  }
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 28px -6px rgba(255,122,61,0.55);}
+  .btn-secondary{
+    border:1px solid var(--line-2);
+    color:var(--paper);
+    padding:15px 26px;
+    border-radius:100px;
+    font-weight:600;
+    font-size:15px;
+    transition:border-color .2s ease, background .2s ease;
+  }
+  .btn-secondary:hover{border-color:var(--paper-dim);background:rgba(255,255,255,0.04);}
+
+  .hero-proof{
+    display:flex;gap:34px;
+    padding-top:30px;
+    border-top:1px solid var(--line);
+  }
+  .proof-stat .num{
+    font-family:'JetBrains Mono',monospace;
+    font-size:26px;font-weight:600;
+    color:var(--paper);
+  }
+  .proof-stat .lbl{
+    font-size:12.5px;color:var(--muted);
+    margin-top:2px;
+  }
+
+  /* ---- Hero signature visual: matching cards ---- */
+  .match-stage{
+    position:relative;
+    height:480px;
+  }
+  .match-card{
+    position:absolute;
+    width:280px;
+    background:var(--ink-3);
+    border:1px solid var(--line-2);
+    border-radius:18px;
+    padding:22px;
+    box-shadow:0 30px 60px -20px rgba(0,0,0,0.6);
+  }
+  .card-project{
+    top:18px;left:6px;
+    animation:floatA 7s ease-in-out infinite;
+  }
+  .card-collab{
+    bottom:14px;right:0;
+    animation:floatB 7s ease-in-out infinite;
+    animation-delay:.3s;
+  }
+  @keyframes floatA{
+    0%,100%{transform:translateY(0) rotate(-1.5deg);}
+    50%{transform:translateY(-12px) rotate(-1deg);}
+  }
+  @keyframes floatB{
+    0%,100%{transform:translateY(0) rotate(1.5deg);}
+    50%{transform:translateY(-14px) rotate(1deg);}
+  }
+  .card-tag{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    padding:4px 10px;
+    border-radius:100px;
+    display:inline-block;
+    margin-bottom:14px;
+  }
+  .tag-project{background:rgba(91,141,184,0.16);color:var(--steel);}
+  .tag-collab{background:rgba(255,122,61,0.16);color:var(--amber);}
+  .card-project h4{font-size:17px;color:var(--paper);margin-bottom:6px;line-height:1.3;}
+  .card-collab h4{font-size:17px;color:var(--paper);margin-bottom:6px;line-height:1.3;}
+  .card-project p, .card-collab p{font-size:13px;color:var(--muted);line-height:1.5;}
+  .card-meta{
+    display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;
+  }
+  .pill{
+    font-size:11px;
+    border:1px solid var(--line-2);
+    color:var(--paper-dim);
+    padding:4px 10px;
+    border-radius:100px;
+  }
+  .spark{
+    position:absolute;
+    top:50%;left:50%;
+    transform:translate(-50%,-50%);
+    width:70px;height:70px;
+    border-radius:50%;
+    background:var(--amber);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 0 0 8px rgba(255,122,61,0.12), 0 0 50px rgba(255,122,61,0.45);
+    animation:pulse 2.6s ease-in-out infinite;
+    z-index:2;
+  }
+  @keyframes pulse{
+    0%,100%{transform:translate(-50%,-50%) scale(1);}
+    50%{transform:translate(-50%,-50%) scale(1.08);}
+  }
+  .spark svg{width:26px;height:26px;}
+
+  @media (max-width:980px){
+    .match-stage{height:380px;margin-top:20px;}
+    .match-card{width:230px;padding:18px;}
+  }
+
+  /* ===== MARQUEE ===== */
+  .marquee-wrap{
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+    padding:22px 0;
+    overflow:hidden;
+    background:var(--ink-2);
+  }
+  .marquee{
+    display:flex;
+    gap:64px;
+    white-space:nowrap;
+    animation:scroll 26s linear infinite;
+    width:max-content;
+  }
+  .marquee span{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    letter-spacing:0.04em;
+  }
+  .marquee span b{color:var(--paper-dim);font-weight:500;}
+  @keyframes scroll{
+    from{transform:translateX(0);}
+    to{transform:translateX(-50%);}
+  }
+
+  /* ===== SECTION SHELL ===== */
+  section{padding:120px 0;}
+  .section-head{
+    max-width:620px;
+    margin-bottom:64px;
+  }
+  .section-head h2{
+    font-size:clamp(30px,3.4vw,44px);
+    margin-top:18px;
+    line-height:1.12;
+    color:var(--paper);
+  }
+  .section-head p{
+    color:var(--paper-dim);
+    font-size:16.5px;
+    margin-top:16px;
+    line-height:1.65;
+  }
+
+  /* ===== THREE PILLARS ===== */
+  .pillars{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+    border-radius:24px;
+    overflow:hidden;
+  }
+  @media (max-width:900px){ .pillars{grid-template-columns:1fr;} }
+
+  .pillar{
+    background:var(--ink-2);
+    padding:44px 36px;
+    position:relative;
+    transition:background .25s ease;
+  }
+  .pillar:hover{background:var(--ink-3);}
+  .pillar .pn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;color:var(--muted);
+    margin-bottom:24px;
+    display:block;
+  }
+  .pillar h3{
+    font-size:23px;color:var(--paper);
+    margin-bottom:12px;
+  }
+  .pillar p{
+    font-size:14.5px;color:var(--paper-dim);
+    line-height:1.65;
+    margin-bottom:22px;
+  }
+  .pillar-icon{
+    width:46px;height:46px;
+    border-radius:12px;
+    display:flex;align-items:center;justify-content:center;
+    margin-bottom:20px;
+  }
+  .pillar-icon svg{width:22px;height:22px;}
+  .icon-amber{background:rgba(255,122,61,0.14);color:var(--amber);}
+  .icon-steel{background:rgba(91,141,184,0.16);color:var(--steel);}
+  .icon-paper{background:var(--line);color:var(--paper);}
+
+  .pillar-link{
+    font-size:13.5px;font-weight:600;
+    color:var(--paper);
+    display:inline-flex;align-items:center;gap:6px;
+    border-bottom:1px solid var(--line-2);
+    padding-bottom:2px;
+  }
+
+  /* ===== HOW IT WORKS — TIMELINE ===== */
+  .how{
+    background:var(--ink-2);
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+  }
+  .timeline{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:0;
+    position:relative;
+    margin-top:24px;
+  }
+  .timeline::before{
+    content:'';
+    position:absolute;
+    top:13px;left:0;right:0;
+    height:1px;
+    background:linear-gradient(90deg, var(--line-2), var(--amber-dim), var(--line-2));
+  }
+  @media (max-width:900px){
+    .timeline{grid-template-columns:1fr;gap:36px;}
+    .timeline::before{display:none;}
+  }
+  .tl-step{position:relative;padding-right:24px;}
+  .tl-dot{
+    width:26px;height:26px;
+    border-radius:50%;
+    background:var(--ink-2);
+    border:1px solid var(--amber);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;color:var(--amber);
+    margin-bottom:22px;
+    position:relative;z-index:1;
+  }
+  .tl-step h4{font-size:17px;color:var(--paper);margin-bottom:8px;}
+  .tl-step p{font-size:13.5px;color:var(--paper-dim);line-height:1.6;}
+
+  /* ===== PRODUCT PREVIEW ===== */
+  .preview-shell{
+    background:var(--ink-3);
+    border:1px solid var(--line-2);
+    border-radius:20px;
+    padding:8px;
+    box-shadow:0 50px 100px -40px rgba(0,0,0,0.6);
+  }
+  .browser-bar{
+    display:flex;align-items:center;gap:8px;
+    padding:14px 16px;
+  }
+  .browser-bar .dot{width:9px;height:9px;border-radius:50%;background:var(--line-2);}
+  .preview-body{
+    background:var(--ink);
+    border-radius:14px;
+    padding:34px;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:28px;
+  }
+  @media (max-width:760px){ .preview-body{grid-template-columns:1fr;} }
+
+  .pred-card{
+    background:var(--ink-2);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:26px;
+  }
+  .pred-card .label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11.5px;color:var(--muted);
+    text-transform:uppercase;letter-spacing:0.08em;
+    margin-bottom:18px;
+  }
+  .field{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:12px 0;
+    border-bottom:1px solid var(--line);
+    font-size:14px;
+  }
+  .field span:first-child{color:var(--paper-dim);}
+  .field span:last-child{color:var(--paper);font-weight:500;}
+  .result-amount{
+    font-family:'Fraunces',serif;
+    font-size:42px;
+    color:var(--amber);
+    margin:18px 0 6px;
+  }
+  .result-range{font-size:13px;color:var(--muted);margin-bottom:18px;}
+  .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .bar-row .bl{font-size:12px;color:var(--paper-dim);width:90px;flex-shrink:0;}
+  .bar-track{flex:1;height:6px;background:var(--ink-3);border-radius:4px;overflow:hidden;}
+  .bar-fill{height:100%;background:var(--steel);border-radius:4px;transition:width .6s ease;}
+  .bar-fill.amber{background:var(--amber);}
+
+  .field-input{padding:10px 0;border-bottom:1px solid var(--line);}
+  .field-input label{display:block;font-size:12px;color:var(--paper-dim);margin-bottom:6px;}
+  .field-input select,
+  .field-input input{
+    width:100%;background:var(--ink-3);border:1px solid var(--line-2);
+    color:var(--paper);font-family:'Inter',sans-serif;font-size:14px;
+    padding:9px 10px;border-radius:8px;outline:none;
+  }
+  .field-input select:focus,
+  .field-input input:focus{border-color:var(--amber);}
+  .field-input:last-of-type{border-bottom:none;}
+
+  .pred-btn{
+    width:100%;margin-top:18px;background:var(--amber);color:var(--ink-fixed);
+    border:none;padding:13px 0;border-radius:100px;font-weight:700;
+    font-size:14px;cursor:pointer;transition:transform .2s ease,opacity .2s ease;
+  }
+  .pred-btn:hover{transform:translateY(-1px);}
+  .pred-btn:disabled{opacity:0.6;cursor:not-allowed;transform:none;}
+  .pred-error{color:var(--amber);font-size:13px;margin-top:10px;display:none;}
+  .pred-placeholder{color:var(--muted);font-size:13px;}
+
+  /* ===== TESTIMONIAL / QUOTE BAND ===== */
+  .quote-band{
+    text-align:center;
+    padding:140px 0;
+  }
+  .quote-band blockquote{
+    font-family:'Fraunces',serif;
+    font-style:italic;
+    font-size:clamp(26px,3.6vw,40px);
+    line-height:1.4;
+    max-width:840px;
+    margin:0 auto 28px;
+    color:var(--paper);
+  }
+  .quote-band blockquote em{color:var(--amber);font-style:italic;}
+  .quote-attr{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;color:var(--muted);
+  }
+
+  /* ===== STATS STRIP ===== */
+  .stats-strip{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+  }
+  @media (max-width:760px){ .stats-strip{grid-template-columns:repeat(2,1fr);} }
+  .stat-cell{
+    padding:48px 32px;
+    border-right:1px solid var(--line);
+  }
+  .stat-cell:last-child{border-right:none;}
+  .stat-cell .num{
+    font-family:'Fraunces',serif;
+    font-size:46px;
+    color:var(--amber);
+    line-height:1;
+  }
+  .stat-cell .lbl{
+    margin-top:10px;
+    font-size:14px;color:var(--paper-dim);
+  }
+
+  /* ===== FINAL CTA ===== */
+  .final-cta{
+    text-align:center;
+    padding:150px 0 130px;
+    position:relative;
+  }
+  .final-cta::before{
+    content:'';
+    position:absolute;
+    bottom:-100px;left:50%;
+    transform:translateX(-50%);
+    width:900px;height:500px;
+    background:radial-gradient(ellipse at center, rgba(255,122,61,0.14) 0%, transparent 70%);
+    pointer-events:none;
+  }
+  .final-cta h2{
+    font-size:clamp(34px,5vw,58px);
+    max-width:760px;
+    margin:20px auto 18px;
+    line-height:1.08;
+  }
+  .final-cta p{
+    color:var(--paper-dim);
+    font-size:17px;
+    max-width:480px;
+    margin:0 auto 36px;
+  }
+  .final-cta .hero-ctas{justify-content:center;}
+
+  /* ===== FOOTER ===== */
+  footer{
+    border-top:1px solid var(--line);
+    padding:64px 0 36px;
+  }
+  .foot-grid{
+    display:grid;
+    grid-template-columns:1.4fr 1fr 1fr 1fr;
+    gap:40px;
+    margin-bottom:56px;
+  }
+  @media (max-width:760px){ .foot-grid{grid-template-columns:1fr 1fr;} }
+  .foot-brand p{
+    color:var(--muted);
+    font-size:14px;
+    margin-top:14px;
+    max-width:240px;
+    line-height:1.6;
+  }
+  .foot-col h5{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11.5px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--muted);
+    margin-bottom:18px;
+  }
+  .foot-col a{
+    display:block;
+    font-size:14px;
+    color:var(--paper-dim);
+    margin-bottom:12px;
+    transition:color .2s ease;
+  }
+  .foot-col a:hover{color:var(--paper);}
+  .foot-bottom{
+    display:flex;justify-content:space-between;align-items:center;
+    padding-top:28px;
+    border-top:1px solid var(--line);
+    font-size:13px;color:var(--muted);
+    flex-wrap:wrap;gap:14px;
+  }
+
+  /* reveal on scroll */
+  .reveal{
+    opacity:0;
+    transform:translateY(24px);
+    transition:opacity .7s ease, transform .7s ease;
+  }
+  .reveal.in{opacity:1;transform:translateY(0);}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important; transition:none !important;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <nav>
+    <div class="logo">forge<span>.</span></div>
+    <div class="nav-links">
+      <a href="#pillars">Platform</a>
+      <a href="#how">How it works</a>
+      <a href="#preview">Salary tool</a>
+      <a href="projects.html">Projects</a>
+      <a href="#stats">Community</a>
+      <a href="login.html" id="nav-login-link" class="logged-out-only">Log in</a>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;" class="logged-out-only">
+      <button class="theme-toggle" id="theme-toggle-btn" type="button" aria-label="Toggle light/dark theme">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
+      <a href="signup.html" class="nav-cta" id="nav-cta-btn">Get early access</a>
+    </div>
+    <div class="avatar-wrap" id="avatar-wrap" style="display:none;"></div>
+  </nav>
+</header>
+
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="eyebrow">Built by a student, for students</div>
+      <h1>Where student builders <em>find each other</em>, <br>not just job listings.</h1>
+      <p class="lede">Forge connects people with unfinished ideas to people who want real experience — then helps both sides know what their time is actually worth.</p>
+      <div class="hero-ctas">
+        <a href="signup.html" class="btn-primary">
+          Start a project
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <a href="#preview" class="btn-secondary">Try the salary tool</a>
+      </div>
+      <div class="hero-proof">
+        <div class="proof-stat">
+          <div class="num">1,787</div>
+          <div class="lbl">clean salary records behind the model</div>
+        </div>
+        <div class="proof-stat">
+          <div class="num">0.90</div>
+          <div class="lbl">R² accuracy on held-out data</div>
+        </div>
+        <div class="proof-stat">
+          <div class="num">3</div>
+          <div class="lbl">tools, one account</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="match-stage">
+      <div class="match-card card-project">
+        <span class="card-tag tag-project">Open project</span>
+        <h4>Salary Predictor → full platform</h4>
+        <p>Needs a frontend dev to help turn a CatBoost model into a real product.</p>
+        <div class="card-meta">
+          <span class="pill">React</span>
+          <span class="pill">Unpaid → credited</span>
+        </div>
+      </div>
+      <div class="spark">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14H11L10 22L20 9H13L13 2Z" fill="#0E0F12"/></svg>
+      </div>
+      <div class="match-card card-collab">
+        <span class="card-tag tag-collab">Collaborator</span>
+        <h4>Maya, 2nd year CS</h4>
+        <p>Wants frontend experience for her portfolio before summer internships.</p>
+        <div class="card-meta">
+          <span class="pill">Available now</span>
+          <span class="pill">React · Figma</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="marquee-wrap">
+  <div class="marquee">
+    <span><b>Predict</b> a fair salary</span>
+    <span><b>Find</b> real job listings</span>
+    <span><b>Post</b> a project idea</span>
+    <span><b>Join</b> a project for credit</span>
+    <span><b>Build</b> your portfolio</span>
+    <span><b>Get</b> hired off the back of it</span>
+    <span><b>Predict</b> a fair salary</span>
+    <span><b>Find</b> real job listings</span>
+    <span><b>Post</b> a project idea</span>
+    <span><b>Join</b> a project for credit</span>
+    <span><b>Build</b> your portfolio</span>
+    <span><b>Get</b> hired off the back of it</span>
+  </div>
+</div>
+
+<section id="pillars">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="eyebrow">Three tools, one purpose</div>
+      <h2>Everything between "I have an idea" and "I have a job."</h2>
+      <p>Most platforms solve one piece of the early-career puzzle. Forge was built because the gap between them is where most students get stuck.</p>
+    </div>
+
+    <div class="pillars reveal">
+      <div class="pillar">
+        <span class="pn">01 / Know your worth</span>
+        <div class="pillar-icon icon-amber">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 2V22M17 5H9.5C8.12 5 7 6.12 7 7.5C7 8.88 8.12 10 9.5 10H14.5C15.88 10 17 11.12 17 12.5C17 13.88 15.88 15 14.5 15H7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </div>
+        <h3>Salary Predictor</h3>
+        <p>A CatBoost model trained on real compensation data estimates what a role should pay, then explains exactly why — by age, education, title, and experience.</p>
+        <a href="#preview" class="pillar-link">Try the model →</a>
+      </div>
+
+      <div class="pillar">
+        <span class="pn">02 / Find the role</span>
+        <div class="pillar-icon icon-steel">
+          <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="7" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 7V5C8 3.9 8.9 3 10 3H14C15.1 3 16 3.9 16 5V7" stroke="currentColor" stroke-width="1.6"/></svg>
+        </div>
+        <h3>Job Finder</h3>
+        <p>Live listings pulled in from real job boards, filtered by your predicted range — so you're applying to roles that actually match what you're worth.</p>
+        <a href="#" class="pillar-link">See open roles →</a>
+      </div>
+
+      <div class="pillar">
+        <span class="pn">03 / Build something real</span>
+        <div class="pillar-icon icon-paper">
+          <svg viewBox="0 0 24 24" fill="none"><circle cx="6" cy="6" r="2.2" stroke="currentColor" stroke-width="1.6"/><circle cx="18" cy="6" r="2.2" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="18" r="2.2" stroke="currentColor" stroke-width="1.6"/><path d="M7.8 7.2L11 16M16.2 7.2L13 16M8.2 6H15.8" stroke="currentColor" stroke-width="1.6"/></svg>
+        </div>
+        <h3>Project Collaboration</h3>
+        <p>Post an idea that needs more hands, or join someone else's. No pay required up front — full credit, a real portfolio piece, and a reference either way.</p>
+        <a href="projects.html" class="pillar-link">Browse projects →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="how" id="how">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="eyebrow">How a project actually moves</div>
+      <h2>From idea to portfolio piece in four steps.</h2>
+    </div>
+
+    <div class="timeline reveal">
+      <div class="tl-step">
+        <div class="tl-dot">01</div>
+        <h4>Post or browse</h4>
+        <p>Describe what you're building and what kind of help you need — or scroll open projects that match your skills.</p>
+      </div>
+      <div class="tl-step">
+        <div class="tl-dot">02</div>
+        <h4>Match & agree terms</h4>
+        <p>Message directly, agree on scope and credit upfront. No payment required — the deal is experience for contribution.</p>
+      </div>
+      <div class="tl-step">
+        <div class="tl-dot">03</div>
+        <h4>Build together</h4>
+        <p>Track progress, share updates, and ship the thing — with both names attached to it from day one.</p>
+      </div>
+      <div class="tl-step">
+        <div class="tl-dot">04</div>
+        <h4>Walk away with proof</h4>
+        <p>A finished project, a public credit, and a collaborator who can vouch for you when it's time to apply.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="preview">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="eyebrow">The tool that started it all</div>
+      <h2>See what the salary model actually does.</h2>
+      <p>Built on CatBoost regression, trained on cleaned salary data, and explained with SHAP — so the number on screen comes with a reason behind it.</p>
+    </div>
+
+    <div class="preview-shell reveal">
+      <div class="browser-bar">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      </div>
+      <div class="preview-body">
+        <div class="pred-card">
+          <div class="label">Your details</div>
+          <div class="field-input">
+            <label for="pf-job">Job title</label>
+            <select id="pf-job"><option value="">Loading job titles…</option></select>
+          </div>
+          <div class="field-input">
+            <label for="pf-edu">Education</label>
+            <select id="pf-edu">
+              <option>High School</option>
+              <option selected>Bachelor</option>
+              <option>Master</option>
+              <option>PhD</option>
+            </select>
+          </div>
+          <div class="field-input">
+            <label for="pf-gender">Gender</label>
+            <select id="pf-gender">
+              <option>Male</option>
+              <option>Female</option>
+            </select>
+          </div>
+          <div class="field-input">
+            <label for="pf-age">Age</label>
+            <input type="number" id="pf-age" min="18" max="100" value="28">
+          </div>
+          <div class="field-input">
+            <label for="pf-exp">Years of experience</label>
+            <input type="number" id="pf-exp" min="0" max="82" value="5">
+          </div>
+          <button class="pred-btn" id="pf-submit">Predict salary</button>
+          <div class="pred-error" id="pf-error"></div>
+        </div>
+        <div class="pred-card">
+          <div class="label">Predicted salary</div>
+          <div id="pf-result">
+            <p class="pred-placeholder">Fill in your details and hit predict to see a live result from the actual CatBoost model.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="quote-band">
+  <div class="wrap">
+    <blockquote class="reveal">"Every student has a project folder full of <em>half-finished ideas</em> — and a CV folder full of <em>nothing to show for it</em>. Forge exists to connect the two."</blockquote>
+    <div class="quote-attr reveal">— Ibrahim Sharker Maruf, Founder</div>
+  </div>
+</div>
+
+<section class="stats-strip" id="stats">
+  <div class="stat-cell">
+    <div class="num">0.90</div>
+    <div class="lbl">Model R² accuracy</div>
+  </div>
+  <div class="stat-cell">
+    <div class="num">17</div>
+    <div class="lbl">Features mapped to real requirements</div>
+  </div>
+  <div class="stat-cell">
+    <div class="num">5</div>
+    <div class="lbl">Fold cross-validation, every time</div>
+  </div>
+  <div class="stat-cell">
+    <div class="num">3</div>
+    <div class="lbl">Tools. One free account.</div>
+  </div>
+</section>
+
+<section class="final-cta">
+  <div class="wrap">
+    <div class="eyebrow" style="justify-content:center;">Join the founding cohort</div>
+    <h2>Stop building alone. Start building credit.</h2>
+    <p>Forge is opening to its first students this term. Reserve your spot before the public launch.</p>
+    <div class="hero-ctas">
+      <a href="signup.html" class="btn-primary">
+        Get early access
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+      <a href="#pillars" class="btn-secondary">Explore the platform</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <div class="logo">forge<span>.</span></div>
+        <p>Built to close the gap between having an idea and having proof you can ship one.</p>
+      </div>
+      <div class="foot-col">
+        <h5>Platform</h5>
+        <a href="#preview">Salary Predictor</a>
+        <a href="#">Job Finder</a>
+        <a href="projects.html">Project Collaboration</a>
+      </div>
+      <div class="foot-col">
+        <h5>Company</h5>
+        <a href="#">About</a>
+        <a href="#">How it works</a>
+        <a href="#">Contact</a>
+      </div>
+      <div class="foot-col">
+        <h5>Resources</h5>
+        <a href="#">Dissertation report</a>
+        <a href="#">Model methodology</a>
+        <a href="#">FAQ</a>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 Forge. A student-built project.</span>
+      <span>Made with CatBoost, SHAP & Streamlit</span>
+    </div>
+  </div>
+</footer>
+
+<script src="auth.js"></script>
+<script src="account-menu.js"></script>
+<script>
+  initThemeToggle('theme-toggle-btn');
+  setupAccountMenu();
+
+  // Scroll reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('in');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Live salary prediction, wired to the FastAPI backend in api.py
+  // (API_BASE comes from auth.js, loaded above)
+  const jobSelect = document.getElementById('pf-job');
+  const submitBtn = document.getElementById('pf-submit');
+  const errorBox = document.getElementById('pf-error');
+  const resultBox = document.getElementById('pf-result');
+
+  fetch(`${API_BASE}/job-titles`)
+    .then(res => res.json())
+    .then(titles => {
+      jobSelect.innerHTML = titles.map(t => `<option>${t}</option>`).join('');
+      const preferred = titles.find(t => t === 'Software Engineer') || titles[0];
+      jobSelect.value = preferred;
+    })
+    .catch(() => {
+      jobSelect.innerHTML = '<option value="">Couldn\'t reach the prediction API</option>';
+    });
+
+  function fmt(n) {
+    return '$' + Math.round(n).toLocaleString('en-US');
+  }
+
+  submitBtn.addEventListener('click', async () => {
+    errorBox.style.display = 'none';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Predicting…';
+
+    const payload = {
+      job_title: jobSelect.value,
+      education: document.getElementById('pf-edu').value,
+      gender: document.getElementById('pf-gender').value,
+      age: Number(document.getElementById('pf-age').value),
+      experience: Number(document.getElementById('pf-exp').value),
+    };
+
+    try {
+      const res = await fetch(`${API_BASE}/predict`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || 'Prediction failed');
+      }
+      const data = await res.json();
+      resultBox.innerHTML = `
+        <div class="result-amount">${fmt(data.prediction)}</div>
+        <div class="result-range">Likely range: ${fmt(data.range_low)} – ${fmt(data.range_high)}</div>
+        ${data.bars.map(b => `
+          <div class="bar-row">
+            <span class="bl">${b.label}</span>
+            <div class="bar-track"><div class="bar-fill${b.label === 'Job title' ? ' amber' : ''}" style="width:${b.pct}%"></div></div>
+          </div>
+        `).join('')}
+      `;
+    } catch (e) {
+      errorBox.textContent = e.message || 'Could not reach the prediction API. Is it running on localhost:8000?';
+      errorBox.style.display = 'block';
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Predict salary';
+    }
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project — Forge</title>
+<script src="theme.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+</head>
+<body>
+
+<header>
+  <nav>
+    <a href="forge_landing_page.html" class="logo">forge<span>.</span></a>
+    <div class="nav-links">
+      <a href="projects.html">Projects</a>
+      <a href="login.html" id="nav-login-link" class="logged-out-only">Log in</a>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;" class="logged-out-only">
+      <button class="theme-toggle" id="theme-toggle-btn" type="button" aria-label="Toggle light/dark theme">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
+      <a href="signup.html" class="nav-cta" id="nav-cta-btn">Get early access</a>
+    </div>
+    <div class="avatar-wrap" id="avatar-wrap" style="display:none;"></div>
+  </nav>
+</header>
+
+<div class="wrap projects-shell" id="project-root">
+  <p class="empty-state">Loading project…</p>
+</div>
+
+<script src="auth.js"></script>
+<script src="account-menu.js"></script>
+<script>
+  initThemeToggle('theme-toggle-btn');
+  setupAccountMenu();
+
+  const projectId = new URLSearchParams(window.location.search).get('id');
+  const root = document.getElementById('project-root');
+  let me = null;
+  let project = null;
+  let activeCounterpartId = null;
+
+  function initialsForName(name) {
+    const parts = name.trim().split(/\s+/);
+    return parts.length > 1
+      ? (parts[0][0] + parts[1][0]).toUpperCase()
+      : name.slice(0, 2).toUpperCase();
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  async function load() {
+    if (!projectId) {
+      root.innerHTML = '<p class="empty-state">No project specified.</p>';
+      return;
+    }
+    if (getToken()) {
+      me = await apiFetch('/auth/me').catch(() => null);
+    }
+    try {
+      project = await apiFetch(`/projects/${projectId}`);
+    } catch (err) {
+      root.innerHTML = `<p class="empty-state">${err.message}</p>`;
+      return;
+    }
+    render();
+  }
+
+  function isOwner() {
+    return me && project.owner.id === me.id;
+  }
+
+  function render() {
+    const skillTags = project.skills.map(s => `<span class="skill-tag">${escapeHtml(s)}</span>`).join('');
+    const credited = project.credited.length
+      ? `<div class="dash-card" style="margin-top:24px;">
+           <div class="label">Credited contributors</div>
+           <div class="credited-list">
+             ${project.credited.map(c => `
+               <div class="credited-chip">
+                 <span class="chip-avatar">${initialsForName(c.name)}</span>
+                 <span>${escapeHtml(c.name)}</span>
+                 ${c.github_url ? `<a href="${escapeHtml(c.github_url)}" target="_blank" style="color:var(--steel);">GitHub</a>` : ''}
+                 ${c.linkedin_url ? `<a href="${escapeHtml(c.linkedin_url)}" target="_blank" style="color:var(--steel);">LinkedIn</a>` : ''}
+               </div>
+             `).join('')}
+           </div>
+         </div>`
+      : '';
+
+    root.innerHTML = `
+      <div class="dash-head">
+        <div>
+          <span class="status-tag ${project.status}">${project.status}</span>
+          <h1 style="margin-top:10px;">${escapeHtml(project.title)}</h1>
+          <p style="color:var(--paper-dim);margin-top:8px;">
+            Posted by ${escapeHtml(project.owner.name)} · ${project.applicant_count} applicant${project.applicant_count === 1 ? '' : 's'}
+          </p>
+        </div>
+        ${isOwner() && project.status === 'open' ? '<button class="btn-secondary" id="complete-btn">Mark as completed</button>' : ''}
+        ${isOwner() ? '<button class="btn-danger" id="delete-btn">Delete project</button>' : ''}
+      </div>
+
+      <div class="project-detail-grid">
+        <div>
+          <div class="dash-card">
+            <div class="label">Description</div>
+            <p style="color:var(--paper-dim);line-height:1.6;white-space:pre-wrap;">${escapeHtml(project.description)}</p>
+            <div class="skill-tags" style="margin-top:16px;">${skillTags}</div>
+          </div>
+          ${credited}
+        </div>
+        <div id="side-panel"></div>
+      </div>
+    `;
+
+    if (isOwner()) {
+      document.getElementById('complete-btn')?.addEventListener('click', markCompleted);
+      document.getElementById('delete-btn').addEventListener('click', deleteProject);
+      renderOwnerPanel();
+    } else {
+      renderVisitorPanel();
+    }
+  }
+
+  async function markCompleted() {
+    if (!confirm('Mark this project as completed? Accepted collaborators will be credited.')) return;
+    project = await apiFetch(`/projects/${projectId}`, { method: 'PATCH', body: JSON.stringify({ status: 'completed' }) });
+    project = await apiFetch(`/projects/${projectId}`);
+    render();
+  }
+
+  async function deleteProject() {
+    if (!confirm('Delete this project permanently? This cannot be undone.')) return;
+    await apiFetch(`/projects/${projectId}`, { method: 'DELETE' });
+    window.location.href = 'projects.html';
+  }
+
+  // ---------- Owner panel: applications + inbox chat ----------
+  function renderOwnerPanel() {
+    const side = document.getElementById('side-panel');
+    const apps = project.applications || [];
+    side.innerHTML = `
+      <div class="dash-card">
+        <div class="label">Applications</div>
+        ${apps.length === 0 ? '<p class="empty-state">No applications yet.</p>' : apps.map(appRow).join('')}
+      </div>
+      <div class="dash-card" style="margin-top:24px;">
+        <div class="label">Messages</div>
+        ${chatPanelHTML(true)}
+      </div>
+    `;
+    apps.forEach(a => {
+      document.getElementById(`accept-${a.id}`)?.addEventListener('click', () => decideApplication(a.id, 'accepted'));
+      document.getElementById(`reject-${a.id}`)?.addEventListener('click', () => decideApplication(a.id, 'rejected'));
+      document.getElementById(`message-${a.id}`)?.addEventListener('click', () => openThread(a.applicant.id, a.applicant.name));
+    });
+    loadThreads();
+    wireChatInput(() => activeCounterpartId);
+  }
+
+  function appRow(a) {
+    return `
+      <div class="app-row">
+        <div class="app-row-head">
+          <strong>${escapeHtml(a.applicant.name)}</strong>
+          <span class="status-tag ${a.status === 'accepted' ? 'completed' : a.status === 'rejected' ? '' : 'open'}">${a.status}</span>
+        </div>
+        <p>${escapeHtml(a.message)}</p>
+        <div class="row-actions">
+          ${a.status === 'pending' ? `<button class="btn-secondary" id="accept-${a.id}">Accept</button><button class="btn-danger" id="reject-${a.id}">Reject</button>` : ''}
+          <button class="btn-secondary" id="message-${a.id}">Message</button>
+        </div>
+      </div>
+    `;
+  }
+
+  async function decideApplication(appId, status) {
+    await apiFetch(`/projects/${projectId}/applications/${appId}`, { method: 'PATCH', body: JSON.stringify({ status }) });
+    project = await apiFetch(`/projects/${projectId}`);
+    render();
+  }
+
+  async function loadThreads() {
+    const list = document.getElementById('thread-list');
+    if (!list) return;
+    try {
+      const threads = await apiFetch(`/projects/${projectId}/threads`);
+      const known = new Set(threads.map(t => t.counterpart.id));
+      const extra = (project.applications || [])
+        .map(a => a.applicant)
+        .filter(a => !known.has(a.id));
+
+      list.innerHTML = [
+        ...threads.map(t => threadItemHTML(t.counterpart.id, t.counterpart.name, t.last_message)),
+        ...extra.map(a => threadItemHTML(a.id, a.name, 'Start a conversation')),
+      ].join('') || '<p class="empty-state" style="padding:10px;">No applicants yet.</p>';
+
+      list.querySelectorAll('.thread-item').forEach(el => {
+        el.addEventListener('click', () => openThread(Number(el.dataset.id), el.dataset.name));
+      });
+
+      const allCounterparts = [...threads.map(t => t.counterpart), ...extra];
+      const stillValid = allCounterparts.some(c => c.id === activeCounterpartId);
+      // Re-render rebuilds #chat-messages from scratch, so always reload the active
+      // thread here too -- otherwise it's stuck on "Loading..." after any owner action.
+      if (stillValid) {
+        openThread(activeCounterpartId);
+      } else if (allCounterparts[0]) {
+        openThread(allCounterparts[0].id);
+      }
+    } catch {
+      list.innerHTML = '<p class="empty-state" style="padding:10px;">Couldn\'t load messages.</p>';
+    }
+  }
+
+  function threadItemHTML(id, name, preview) {
+    return `<div class="thread-item${id === activeCounterpartId ? ' active' : ''}" data-id="${id}" data-name="${escapeHtml(name)}">
+      <strong style="display:block;font-size:13px;">${escapeHtml(name)}</strong>
+      <span style="color:var(--muted);font-size:12px;">${escapeHtml(preview.slice(0, 30))}</span>
+    </div>`;
+  }
+
+  // ---------- Visitor / applicant panel: apply + direct chat with owner ----------
+  function renderVisitorPanel() {
+    const side = document.getElementById('side-panel');
+    let applyBlock;
+
+    if (!getToken()) {
+      applyBlock = `<div class="dash-card"><p class="empty-state">Log in to apply or message the owner.</p></div>`;
+      side.innerHTML = applyBlock;
+      return;
+    }
+
+    if (project.my_application) {
+      const a = project.my_application;
+      applyBlock = `
+        <div class="dash-card">
+          <div class="label">Your application</div>
+          <span class="status-tag ${a.status === 'accepted' ? 'completed' : a.status === 'rejected' ? '' : 'open'}">${a.status}</span>
+          <p style="color:var(--paper-dim);margin-top:10px;">${escapeHtml(a.message)}</p>
+        </div>
+      `;
+    } else if (project.status === 'open') {
+      applyBlock = `
+        <div class="dash-card">
+          <div class="label">Apply to collaborate</div>
+          <div class="field-input">
+            <textarea id="apply-message" rows="4" placeholder="Why do you want to help, and what can you bring?"></textarea>
+          </div>
+          <button class="btn-primary" id="apply-btn" style="width:100%;margin-top:10px;">Apply</button>
+          <div class="form-error" id="apply-error"></div>
+        </div>
+      `;
+    } else {
+      applyBlock = `<div class="dash-card"><p class="empty-state">This project is already completed.</p></div>`;
+    }
+
+    side.innerHTML = `
+      ${applyBlock}
+      <div class="dash-card" style="margin-top:24px;">
+        <div class="label">Message ${escapeHtml(project.owner.name)}</div>
+        ${chatPanelHTML(false)}
+      </div>
+    `;
+
+    document.getElementById('apply-btn')?.addEventListener('click', submitApplication);
+    activeCounterpartId = project.owner.id;
+    wireChatInput(() => project.owner.id);
+    loadMessages(project.owner.id);
+  }
+
+  async function submitApplication() {
+    const errorBox = document.getElementById('apply-error');
+    errorBox.style.display = 'none';
+    try {
+      await apiFetch(`/projects/${projectId}/apply`, {
+        method: 'POST',
+        body: JSON.stringify({ message: document.getElementById('apply-message').value }),
+      });
+      project = await apiFetch(`/projects/${projectId}`);
+      render();
+    } catch (err) {
+      errorBox.textContent = err.message;
+      errorBox.style.display = 'block';
+    }
+  }
+
+  // ---------- Shared chat widget ----------
+  function chatPanelHTML(withThreadList) {
+    return `
+      <div class="chat-panel">
+        <div class="chat-body">
+          ${withThreadList ? '<div class="thread-list" id="thread-list"><p class="empty-state" style="padding:10px;">Loading…</p></div>' : ''}
+          <div class="chat-messages" id="chat-messages"><p class="empty-state">Loading…</p></div>
+        </div>
+        <div class="chat-input-row">
+          <input type="text" id="chat-input" placeholder="Write a message…" ${!getToken() ? 'disabled' : ''}>
+          <button class="btn-primary" id="chat-send-btn" ${!getToken() ? 'disabled' : ''}>Send</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function openThread(id, name) {
+    activeCounterpartId = id;
+    document.querySelectorAll('.thread-item').forEach(el => {
+      el.classList.toggle('active', Number(el.dataset.id) === id);
+    });
+    loadMessages(id);
+  }
+
+  async function loadMessages(counterpartId) {
+    const box = document.getElementById('chat-messages');
+    if (!box) return;
+    try {
+      const messages = await apiFetch(`/projects/${projectId}/messages?with=${counterpartId}`);
+      box.innerHTML = messages.length
+        ? messages.map(m => `<div class="chat-bubble ${m.sender_id === me.id ? 'mine' : 'theirs'}">${escapeHtml(m.body)}</div>`).join('')
+        : '<p class="empty-state">No messages yet — say hello.</p>';
+      box.scrollTop = box.scrollHeight;
+    } catch (err) {
+      box.innerHTML = `<p class="empty-state">${err.message}</p>`;
+    }
+  }
+
+  function wireChatInput(getRecipientId) {
+    const input = document.getElementById('chat-input');
+    const sendBtn = document.getElementById('chat-send-btn');
+    if (!input || !sendBtn) return;
+
+    async function send() {
+      const body = input.value.trim();
+      const recipientId = getRecipientId();
+      if (!body || !recipientId) return;
+      sendBtn.disabled = true;
+      try {
+        await apiFetch(`/projects/${projectId}/messages`, {
+          method: 'POST',
+          body: JSON.stringify({ recipient_id: recipientId, body }),
+        });
+        input.value = '';
+        await loadMessages(recipientId);
+        if (document.getElementById('thread-list')) loadThreads();
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        sendBtn.disabled = false;
+      }
+    }
+
+    sendBtn.addEventListener('click', send);
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
+  }
+
+  load();
+
+  setInterval(() => {
+    if (activeCounterpartId && document.getElementById('chat-messages')) {
+      loadMessages(activeCounterpartId);
+    }
+  }, 4000);
+</script>
+</body>
+</html>

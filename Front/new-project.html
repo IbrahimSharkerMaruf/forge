@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Post a project — Forge</title>
+<script src="theme.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+</head>
+<body>
+
+<header>
+  <nav>
+    <a href="forge_landing_page.html" class="logo">forge<span>.</span></a>
+    <div class="nav-links">
+      <a href="projects.html">Projects</a>
+    </div>
+    <div class="avatar-wrap" id="avatar-wrap" style="display:none;"></div>
+  </nav>
+</header>
+
+<div class="auth-shell">
+  <div class="auth-card" style="max-width:560px;">
+    <h1>Post a project</h1>
+    <p class="auth-sub">Describe what you're building and what kind of help you need. Anyone can apply, and you decide who joins.</p>
+
+    <form id="project-form">
+      <div class="field-input">
+        <label for="title">Project title</label>
+        <input type="text" id="title" required maxlength="160" placeholder="e.g. Salary Predictor → full platform">
+      </div>
+      <div class="field-input">
+        <label for="description">Description</label>
+        <textarea id="description" rows="6" required placeholder="What's built so far, what's missing, and what kind of collaborator you're looking for."></textarea>
+      </div>
+      <div class="field-input">
+        <label for="skills">Skills needed (comma-separated)</label>
+        <input type="text" id="skills" placeholder="React, FastAPI, Design">
+      </div>
+      <button type="submit" class="btn-primary" id="submit-btn" style="width:100%;margin-top:20px;">Post project</button>
+      <div class="form-error" id="error-box"></div>
+    </form>
+  </div>
+</div>
+
+<script src="auth.js"></script>
+<script src="account-menu.js"></script>
+<script>
+  initThemeToggle('theme-toggle-btn');
+
+  (async () => {
+    const user = await requireLogin();
+    if (user) setupAccountMenu();
+  })();
+
+  const form = document.getElementById('project-form');
+  const submitBtn = document.getElementById('submit-btn');
+  const errorBox = document.getElementById('error-box');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorBox.style.display = 'none';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Posting…';
+
+    try {
+      const project = await apiFetch('/projects', {
+        method: 'POST',
+        body: JSON.stringify({
+          title: document.getElementById('title').value,
+          description: document.getElementById('description').value,
+          skills: document.getElementById('skills').value.split(',').map(s => s.trim()).filter(Boolean),
+        }),
+      });
+      window.location.href = `project.html?id=${project.id}`;
+    } catch (err) {
+      errorBox.textContent = err.message;
+      errorBox.style.display = 'block';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Post project';
+    }
+  });
+</script>
+</body>
+</html>
