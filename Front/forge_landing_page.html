@@ -350,6 +350,14 @@
 
   /* ===== SECTION SHELL ===== */
   section{padding:120px 0;}
+  #preview{position:relative;overflow:hidden;}
+  #preview::before{
+    content:'';position:absolute;top:-180px;left:50%;transform:translateX(-50%);
+    width:1000px;height:550px;
+    background:radial-gradient(ellipse at center, rgba(91,141,184,0.12) 0%, rgba(255,122,61,0.08) 45%, transparent 72%);
+    pointer-events:none;filter:blur(10px);
+  }
+  #preview .wrap{position:relative;}
   .section-head{
     max-width:620px;
     margin-bottom:64px;
@@ -488,6 +496,10 @@
     border-radius:16px;
     padding:26px;
   }
+  .pred-card-result{display:flex;flex-direction:column;}
+  .pred-card-result #pf-result{flex:1;display:flex;flex-direction:column;justify-content:center;}
+  .pred-card-result #pf-result:has(.result-amount){justify-content:flex-start;}
+  .pred-placeholder-icon{color:var(--line-2);margin:0 auto 16px;display:block;}
   .pred-card .label{
     font-family:'JetBrains Mono',monospace;
     font-size:11.5px;color:var(--muted);
@@ -535,7 +547,28 @@
   .pred-btn:hover{transform:translateY(-1px);}
   .pred-btn:disabled{opacity:0.6;cursor:not-allowed;transform:none;}
   .pred-error{color:var(--amber);font-size:13px;margin-top:10px;display:none;}
-  .pred-placeholder{color:var(--muted);font-size:13px;}
+  .pred-placeholder{color:var(--muted);font-size:13px;text-align:center;max-width:240px;margin:0 auto;line-height:1.6;}
+
+  .pf-jobs{margin-top:22px;padding-top:22px;border-top:1px solid var(--line);}
+  .pf-jobs-label{
+    font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);
+    text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;
+  }
+  .pf-jobs-note{font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.5;}
+  .job-mini-list{
+    display:flex;flex-direction:column;gap:10px;
+    max-height:340px;overflow-y:auto;padding-right:6px;
+  }
+  .job-mini-list::-webkit-scrollbar{width:6px;}
+  .job-mini-list::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:3px;}
+  .job-mini-list::-webkit-scrollbar-track{background:transparent;}
+  .job-mini-card{background:var(--ink-3);border-radius:10px;padding:13px 14px;}
+  .job-mini-card h5{font-size:13.5px;margin-bottom:2px;font-weight:600;}
+  .job-mini-card .meta{font-size:12px;color:var(--paper-dim);margin-bottom:8px;}
+  .job-mini-row{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+  .job-mini-salary{font-size:12px;color:var(--amber);font-family:'JetBrains Mono',monospace;white-space:nowrap;}
+  .job-mini-link{font-size:12px;color:var(--steel);font-weight:600;flex-shrink:0;}
+  .job-mini-link:hover{text-decoration:underline;}
 
   /* ===== TESTIMONIAL / QUOTE BAND ===== */
   .quote-band{
@@ -670,12 +703,13 @@
 
 <header>
   <nav>
-    <div class="logo">forge<span>.</span></div>
+    <a href="forge_landing_page.html" class="logo">forge<span>.</span></a>
     <div class="nav-links">
       <a href="#pillars">Platform</a>
       <a href="#how">How it works</a>
       <a href="#preview">Salary tool</a>
       <a href="projects.html">Projects</a>
+      <a href="insights.html">Model Insights</a>
       <a href="#stats">Community</a>
       <a href="login.html" id="nav-login-link" class="logged-out-only">Log in</a>
     </div>
@@ -788,7 +822,7 @@
         </div>
         <h3>Job Finder</h3>
         <p>Live listings pulled in from real job boards, filtered by your predicted range — so you're applying to roles that actually match what you're worth.</p>
-        <a href="#" class="pillar-link">See open roles →</a>
+        <a href="#preview" class="pillar-link">See open roles →</a>
       </div>
 
       <div class="pillar">
@@ -882,9 +916,10 @@
           <button class="pred-btn" id="pf-submit">Predict salary</button>
           <div class="pred-error" id="pf-error"></div>
         </div>
-        <div class="pred-card">
+        <div class="pred-card pred-card-result">
           <div class="label">Predicted salary</div>
           <div id="pf-result">
+            <svg class="pred-placeholder-icon" width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M3 17L9 11L13 15L21 7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 7H15M21 7V13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
             <p class="pred-placeholder">Fill in your details and hit predict to see a live result from the actual CatBoost model.</p>
           </div>
         </div>
@@ -938,13 +973,13 @@
   <div class="wrap">
     <div class="foot-grid">
       <div class="foot-brand">
-        <div class="logo">forge<span>.</span></div>
+        <a href="forge_landing_page.html" class="logo">forge<span>.</span></a>
         <p>Built to close the gap between having an idea and having proof you can ship one.</p>
       </div>
       <div class="foot-col">
         <h5>Platform</h5>
         <a href="#preview">Salary Predictor</a>
-        <a href="#">Job Finder</a>
+        <a href="#preview">Job Finder</a>
         <a href="projects.html">Project Collaboration</a>
       </div>
       <div class="foot-col">
@@ -1007,6 +1042,55 @@
     return '$' + Math.round(n).toLocaleString('en-US');
   }
 
+  function fmtGBP(n) {
+    return '£' + Math.round(n).toLocaleString('en-GB');
+  }
+
+  function timeAgo(dateStr) {
+    if (!dateStr) return '';
+    const days = Math.floor((Date.now() - new Date(dateStr)) / 86400000);
+    if (days <= 0) return 'today';
+    if (days === 1) return '1 day ago';
+    return `${days} days ago`;
+  }
+
+  async function loadJobListings(jobTitle) {
+    const box = document.getElementById('pf-jobs');
+    if (!box) return;
+    try {
+      const res = await fetch(`${API_BASE}/jobs/similar?job_title=${encodeURIComponent(jobTitle)}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || 'Could not load job listings');
+      }
+      const data = await res.json();
+      const listings = data.listings;
+      if (!listings.length) {
+        box.querySelector('.pf-jobs-note').textContent = 'No live listings found for this title right now.';
+        return;
+      }
+      box.innerHTML = `
+        <div class="pf-jobs-label">Similar job listings (${listings.length})</div>
+        <div class="pf-jobs-note">Live UK openings via Adzuna, priced in £ (real postings, separate from the modeled $ prediction above). Scroll for more.</div>
+        <div class="job-mini-list">
+          ${listings.map(j => `
+            <div class="job-mini-card">
+              <h5>${j.title || 'Untitled role'}</h5>
+              <div class="meta">${[j.company, j.location].filter(Boolean).join(' · ')}${j.created ? ' · ' + timeAgo(j.created) : ''}</div>
+              <div class="job-mini-row">
+                ${j.salary_min ? `<span class="job-mini-salary">${fmtGBP(j.salary_min)}${j.salary_max && j.salary_max !== j.salary_min ? ' – ' + fmtGBP(j.salary_max) : ''}</span>` : '<span></span>'}
+                <a href="${j.url}" target="_blank" rel="noopener" class="job-mini-link">View →</a>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    } catch (err) {
+      box.querySelector('.pf-jobs-note').textContent =
+        err.message.includes('configured') ? 'Job listings aren\'t set up yet for this site.' : err.message;
+    }
+  }
+
   submitBtn.addEventListener('click', async () => {
     errorBox.style.display = 'none';
     submitBtn.disabled = true;
@@ -1031,6 +1115,7 @@
         throw new Error(err.detail || 'Prediction failed');
       }
       const data = await res.json();
+      const detailsUrl = 'result.html?' + new URLSearchParams(payload).toString();
       resultBox.innerHTML = `
         <div class="result-amount">${fmt(data.prediction)}</div>
         <div class="result-range">Likely range: ${fmt(data.range_low)} – ${fmt(data.range_high)}</div>
@@ -1040,7 +1125,13 @@
             <div class="bar-track"><div class="bar-fill${b.label === 'Job title' ? ' amber' : ''}" style="width:${b.pct}%"></div></div>
           </div>
         `).join('')}
+        <a href="${detailsUrl}" class="btn-secondary" style="display:flex;width:100%;margin-top:18px;justify-content:center;">More info</a>
+        <div class="pf-jobs" id="pf-jobs">
+          <div class="pf-jobs-label">Similar job listings</div>
+          <div class="pf-jobs-note">Loading live openings…</div>
+        </div>
       `;
+      loadJobListings(payload.job_title);
     } catch (e) {
       errorBox.textContent = e.message || 'Could not reach the prediction API. Is it running on localhost:8000?';
       errorBox.style.display = 'block';

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prediction breakdown — Forge</title>
+<script src="theme.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css?v=2">
+</head>
+<body>
+
+<header>
+  <nav>
+    <a href="forge_landing_page.html" class="logo">forge<span>.</span></a>
+    <div class="nav-links">
+      <a href="forge_landing_page.html#preview">Salary tool</a>
+      <a href="projects.html">Projects</a>
+      <a href="insights.html">Model Insights</a>
+      <a href="login.html" id="nav-login-link" class="logged-out-only">Log in</a>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;" class="logged-out-only">
+      <button class="theme-toggle" id="theme-toggle-btn" type="button" aria-label="Toggle light/dark theme">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
+      <a href="signup.html" class="nav-cta" id="nav-cta-btn">Get early access</a>
+    </div>
+    <div class="avatar-wrap" id="avatar-wrap" style="display:none;"></div>
+  </nav>
+</header>
+
+<div class="wrap insights-shell page-glow">
+  <div class="eyebrow">Your prediction, explained</div>
+  <h1 id="page-title">Here's the full breakdown</h1>
+  <p class="lede" id="not-found" style="display:none;">
+    No prediction details found in the URL — go back to the
+    <a href="forge_landing_page.html#preview" style="color:var(--amber);">salary tool</a> and run a prediction first.
+  </p>
+
+  <div id="content" style="display:none;">
+    <div class="chart-card recap-card" style="margin-top:32px;">
+      <div class="result-recap">
+        <span class="num" id="recap-amount">—</span>
+        <span class="range" id="recap-range"></span>
+      </div>
+      <div class="recap-tags" id="recap-tags"></div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap insights-shell" id="content-rest" style="display:none;padding-top:40px;">
+    <div class="insights-section" style="margin-top:0;">
+      <h2>What drove this number</h2>
+      <p class="section-sub">Each feature's contribution to this specific prediction, relative to the model's baseline expectation.</p>
+      <div class="chart-card" id="tornado-chart"><p class="empty-state">Loading…</p></div>
+    </div>
+
+    <hr class="section-divider">
+
+    <div class="insights-section" style="margin-top:0;">
+      <h2>Where this falls in the dataset</h2>
+      <p class="section-sub" id="percentile-text"></p>
+      <div class="chart-card">
+        <div class="chart-wrap" id="histogram-chart"><p class="empty-state">Loading…</p></div>
+        <div class="chart-legend">
+          <span><span class="legend-dot" style="background:var(--amber);"></span>The bracket this prediction falls into</span>
+          <span><span class="legend-dot" style="background:var(--steel);"></span>Rest of the cleaned dataset (1,787 rows)</span>
+        </div>
+      </div>
+    </div>
+
+    <hr class="section-divider">
+
+    <div class="insights-section" id="job-compare-section" style="margin-top:0;">
+      <h2>Compared to others with the same job title</h2>
+      <p class="section-sub" id="job-compare-sub"></p>
+      <div class="chart-card" id="job-compare-card"><p class="empty-state">Loading…</p></div>
+    </div>
+
+    <div class="insights-section">
+      <a href="forge_landing_page.html#preview" class="btn-secondary">← Try another prediction</a>
+    </div>
+</div>
+
+<script src="auth.js"></script>
+<script src="account-menu.js"></script>
+<script>
+  initThemeToggle('theme-toggle-btn');
+  setupAccountMenu();
+
+  function fmt(n) { return '$' + Math.round(n).toLocaleString('en-US'); }
+
+  const params = new URLSearchParams(window.location.search);
+  const inputs = {
+    age: params.get('age'),
+    gender: params.get('gender'),
+    education: params.get('education'),
+    job_title: params.get('job_title'),
+    experience: params.get('experience'),
+  };
+
+  async function load() {
+    if (!inputs.age || !inputs.gender || !inputs.education || !inputs.job_title || !inputs.experience) {
+      document.getElementById('not-found').style.display = 'block';
+      return;
+    }
+    document.getElementById('content').style.display = 'block';
+    document.getElementById('content-rest').style.display = 'block';
+    document.getElementById('page-title').textContent = `Breakdown: ${inputs.job_title}`;
+
+    document.getElementById('recap-tags').innerHTML = [
+      `${inputs.age} years old`, inputs.gender, inputs.education, `${inputs.job_title}`, `${inputs.experience} yrs experience`,
+    ].map(t => `<span class="skill-tag">${t}</span>`).join('');
+
+    try {
+      const data = await apiFetch(`/predict/details?${params.toString()}`);
+      renderRecap(data);
+      renderTornado(data.breakdown);
+      renderHistogram(data);
+      renderJobCompare(data.job_stats);
+    } catch (err) {
+      document.getElementById('tornado-chart').innerHTML = `<p class="empty-state">${err.message}</p>`;
+    }
+  }
+
+  function renderRecap(data) {
+    document.getElementById('recap-amount').textContent = fmt(data.prediction);
+    document.getElementById('recap-range').textContent = `Likely range: ${fmt(data.range_low)} – ${fmt(data.range_high)}`;
+  }
+
+  function renderTornado(breakdown) {
+    const card = document.getElementById('tornado-chart');
+    const maxAbs = Math.max(...breakdown.map(b => Math.abs(b.value)));
+    card.innerHTML = breakdown.map(b => {
+      const pct = (Math.abs(b.value) / maxAbs * 50).toFixed(1);
+      return `
+        <div class="tornado-row">
+          <span class="tl">${b.feature}</span>
+          <div class="tornado-track">
+            <div class="tornado-center"></div>
+            <div class="tornado-fill ${b.direction}" style="width:${pct}%;"></div>
+          </div>
+          <span class="tv ${b.direction}">${b.direction === 'up' ? '+' : '−'}${fmt(Math.abs(b.value))}</span>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function buildHistogram(histogram, predictedBin) {
+    const width = 820, height = 320;
+    const margin = { left: 60, right: 20, top: 20, bottom: 50 };
+    const innerW = width - margin.left - margin.right;
+    const innerH = height - margin.top - margin.bottom;
+
+    const maxCount = Math.max(...histogram.map(b => b.count));
+    const barGap = 2;
+    const barW = innerW / histogram.length - barGap;
+
+    const bars = histogram.map((b, i) => {
+      const x = margin.left + i * (innerW / histogram.length);
+      const h = (b.count / maxCount) * innerH;
+      const y = height - margin.bottom - h;
+      const isPredicted = i === predictedBin;
+      return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" fill="${isPredicted ? 'var(--amber)' : 'var(--steel)'}" opacity="${isPredicted ? '0.95' : '0.45'}"></rect>`;
+    }).join('');
+
+    const tickIdxs = [0, Math.floor(histogram.length / 2), histogram.length - 1];
+    const xTicks = tickIdxs.map(i => {
+      const x = margin.left + i * (innerW / histogram.length) + barW / 2;
+      return `<text x="${x.toFixed(1)}" y="${height - margin.bottom + 20}" font-size="11" fill="var(--muted)" text-anchor="middle">${fmt(histogram[i].range_low)}</text>`;
+    }).join('');
+
+    return `
+      <svg viewBox="0 0 ${width} ${height}" width="100%" height="${height}" xmlns="http://www.w3.org/2000/svg">
+        <line x1="${margin.left}" y1="${height - margin.bottom}" x2="${width - margin.right}" y2="${height - margin.bottom}" stroke="var(--line-2)" stroke-width="1"></line>
+        ${bars}
+        ${xTicks}
+        <text x="${margin.left + innerW / 2}" y="${height - 8}" font-size="12" fill="var(--paper-dim)" text-anchor="middle">Salary</text>
+      </svg>
+    `;
+  }
+
+  function renderHistogram(data) {
+    document.getElementById('histogram-chart').innerHTML = buildHistogram(data.histogram, data.predicted_bin);
+    document.getElementById('percentile-text').textContent =
+      `This prediction is higher than ${data.percentile}% of the 1,787 salaries in the cleaned training data.`;
+  }
+
+  function renderJobCompare(stats) {
+    const card = document.getElementById('job-compare-card');
+    const sub = document.getElementById('job-compare-sub');
+    if (!stats) {
+      sub.textContent = `No rows in the training data exactly match "${inputs.job_title}" after cleaning.`;
+      card.innerHTML = '<p class="empty-state">Not enough data for this title.</p>';
+      return;
+    }
+    sub.textContent = `Based on ${stats.count} matching row${stats.count === 1 ? '' : 's'} for "${inputs.job_title}" in the training data.`;
+
+    const prediction = Number(document.getElementById('recap-amount').textContent.replace(/[^0-9]/g, ''));
+    const pos = Math.min(100, Math.max(0, ((prediction - stats.min) / (stats.max - stats.min)) * 100));
+
+    card.innerHTML = `
+      <div class="compare-grid">
+        <div class="compare-stat"><div class="num">${fmt(stats.min)}</div><div class="lbl">Lowest seen</div></div>
+        <div class="compare-stat"><div class="num">${fmt(stats.mean)}</div><div class="lbl">Average</div></div>
+        <div class="compare-stat"><div class="num">${fmt(stats.max)}</div><div class="lbl">Highest seen</div></div>
+      </div>
+      <div class="compare-range">
+        <div class="marker" style="left:${pos.toFixed(1)}%;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);">
+        <span>${fmt(stats.min)}</span><span>This prediction</span><span>${fmt(stats.max)}</span>
+      </div>
+    `;
+  }
+
+  load();
+</script>
+</body>
+</html>

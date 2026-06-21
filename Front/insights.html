@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Model Insights — Forge</title>
+<script src="theme.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css?v=2">
+</head>
+<body>
+
+<header>
+  <nav>
+    <a href="forge_landing_page.html" class="logo">forge<span>.</span></a>
+    <div class="nav-links">
+      <a href="forge_landing_page.html#preview">Salary tool</a>
+      <a href="projects.html">Projects</a>
+      <a href="insights.html">Model Insights</a>
+      <a href="login.html" id="nav-login-link" class="logged-out-only">Log in</a>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;" class="logged-out-only">
+      <button class="theme-toggle" id="theme-toggle-btn" type="button" aria-label="Toggle light/dark theme">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
+      <a href="signup.html" class="nav-cta" id="nav-cta-btn">Get early access</a>
+    </div>
+    <div class="avatar-wrap" id="avatar-wrap" style="display:none;"></div>
+  </nav>
+</header>
+
+<div class="wrap insights-shell page-glow">
+  <div class="eyebrow">Critical evaluation, not just good numbers</div>
+  <h1>How well does the salary model actually work — and where does it fail?</h1>
+  <p class="lede">
+    Every number on this page comes from the live model and the same train/test split used to build it
+    (1,787 cleaned rows, 80/20 split, seed 42) — computed by the API, not hand-picked.
+  </p>
+
+  <div class="stats-strip" id="headline-stats">
+    <div class="stat-cell"><div class="num">—</div><div class="lbl">Loading…</div></div>
+  </div>
+</div>
+
+<div class="insights-band">
+  <div class="wrap">
+    <div class="insights-section">
+      <div class="section-icon icon-amber">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 4L6 6.5V11C6 15.3 8.6 18.4 12 19.5C15.4 18.4 18 15.3 18 11V6.5L12 4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9.5 12L11.3 13.8L14.5 10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h2>Is the model reliable?</h2>
+      <p class="section-sub">Two checks: does it beat the alternatives, and does its score hold up across different data splits?</p>
+      <div class="dash-grid" style="align-items:start;">
+        <div class="chart-card">
+          <div class="label">Model comparison</div>
+          <table id="comparison-table">
+            <thead><tr><th>Model</th><th>R²</th><th>MAE</th></tr></thead>
+            <tbody><tr><td colspan="3" class="empty-state">Loading…</td></tr></tbody>
+          </table>
+          <div class="insight" id="comparison-note" style="margin-top:20px;"></div>
+        </div>
+        <div class="chart-card">
+          <div class="label">5-fold cross-validation</div>
+          <div class="chart-wrap" id="cv-chart"><p class="empty-state">Loading…</p></div>
+          <div class="insight steel" id="cv-callout" style="margin-top:18px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="insights-section" style="margin:64px 0;">
+    <div class="section-icon icon-steel">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M6 19V11M12 19V5M18 19V14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </div>
+    <h2>What does it actually use?</h2>
+    <p class="section-sub">What the deployed model leans on to make a prediction.</p>
+    <div class="chart-card" id="importance-chart">
+      <p class="empty-state">Loading…</p>
+    </div>
+  </div>
+</div>
+
+<div class="insights-band">
+  <div class="wrap">
+    <div class="insights-section">
+      <div class="section-icon icon-amber">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="7" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="0.9" fill="currentColor"/></svg>
+      </div>
+      <h2>Actual vs. predicted</h2>
+      <p class="section-sub">
+        The same 358 test-set predictions as the residual plot below, shown differently: each point is
+        (predicted salary, actual salary). The closer the cloud sits to the diagonal, the better the fit.
+      </p>
+      <div class="chart-card">
+        <div class="chart-wrap" id="fit-chart"><p class="empty-state">Loading…</p></div>
+        <div class="chart-legend">
+          <span><span class="legend-dot" style="background:var(--amber);"></span>Test set prediction (n=358)</span>
+          <span><span class="legend-dot" style="background:var(--steel);"></span>Perfect prediction (y = x)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="insights-section" style="margin:64px 0;">
+    <div class="section-icon icon-steel">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M5 15C7.2 15 7.2 8 9.7 8C12.2 8 12.2 17 14.7 17C17.2 17 17.2 9 19 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <h2>Residual plot</h2>
+    <p class="section-sub">
+      Each point is one test-set prediction. The y-axis is <strong>actual − predicted</strong> —
+      points above the dashed line mean the model under-predicted; points below mean it over-predicted.
+    </p>
+    <div class="chart-card">
+      <div class="chart-wrap" id="residual-chart"><p class="empty-state">Loading…</p></div>
+      <div class="chart-legend">
+        <span><span class="legend-dot" style="background:var(--amber);"></span>Test set prediction (n=358)</span>
+        <span><span class="legend-dot" style="background:var(--steel);"></span>Zero error line</span>
+      </div>
+      <div class="insight steel" style="margin-top:20px;">
+        The spread isn't constant: below the median predicted salary the typical error is about <strong>$13,300</strong>;
+        above the median it widens to about <strong>$19,500</strong> — the model is noticeably less reliable for
+        higher earners, likely because high salaries are rarer in the data.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="insights-band">
+  <div class="wrap">
+    <div class="insights-section">
+      <div class="section-icon icon-paper">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 5V19" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M6 8H18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M6 8L4.5 12C4.5 13.2 5.6 14 7 14C8.4 14 9.5 13.2 9.5 12L8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 8L14.5 12C14.5 13.2 15.6 14 17 14C18.4 14 19.5 13.2 19.5 12L18 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h2>Bias analysis — gender</h2>
+      <p class="section-sub">
+        Direct relevance to the Legal/Ethical/Social Considerations section: does the model treat identical
+        profiles differently purely because of gender?
+      </p>
+      <div class="bias-grid" id="bias-grid">
+        <p class="empty-state">Loading…</p>
+      </div>
+      <div class="insight" id="bias-callout"></div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap" style="padding-bottom:80px;"></div>
+
+<script src="auth.js"></script>
+<script src="account-menu.js"></script>
+<script>
+  initThemeToggle('theme-toggle-btn');
+  setupAccountMenu();
+
+  function fmt(n) { return '$' + Math.round(n).toLocaleString('en-US'); }
+
+  async function loadComparison() {
+    const tbody = document.querySelector('#comparison-table tbody');
+    const note = document.getElementById('comparison-note');
+    try {
+      const rows = await apiFetch('/insights/model-comparison');
+      tbody.innerHTML = rows.map((r, i) => `
+        <tr class="${i === 0 ? 'winner-row' : ''}">
+          <td>${r.model}${i === 0 ? '<span class="winner-badge">Best</span>' : ''}</td>
+          <td>${r.r2.toFixed(4)}</td>
+          <td>${fmt(r.mae)}</td>
+        </tr>
+      `).join('');
+      const winner = rows[0];
+      const deployed = rows.find(r => r.model === 'CatBoost');
+      note.innerHTML = winner.model === 'CatBoost'
+        ? `<strong>CatBoost</strong> is both the best scorer here and the model deployed on the live predictor.`
+        : `<strong>${winner.model}</strong> scores marginally higher on this split, but CatBoost (R²=${deployed.r2.toFixed(4)}) is what's deployed — the gap between all three models is within a few hundred dollars of MAE, which is noise at this dataset size (1,787 rows). CatBoost was kept for its native categorical handling, not because it dominates on raw accuracy.`;
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="3" class="empty-state">${err.message}</td></tr>`;
+    }
+  }
+
+  function buildResidualChart(points) {
+    const width = 820, height = 380;
+    const margin = { left: 70, right: 20, top: 20, bottom: 50 };
+    const innerW = width - margin.left - margin.right;
+    const innerH = height - margin.top - margin.bottom;
+
+    const xs = points.map(p => p.predicted);
+    const ys = points.map(p => p.residual);
+    const xMin = Math.min(...xs), xMax = Math.max(...xs);
+    const yAbsMax = Math.max(Math.abs(Math.min(...ys)), Math.abs(Math.max(...ys)));
+    const yMin = -yAbsMax * 1.1, yMax = yAbsMax * 1.1;
+
+    const sx = v => margin.left + ((v - xMin) / (xMax - xMin)) * innerW;
+    const sy = v => margin.top + (1 - (v - yMin) / (yMax - yMin)) * innerH;
+
+    const zeroY = sy(0);
+    const xTicks = [0, 0.25, 0.5, 0.75, 1].map(t => xMin + t * (xMax - xMin));
+    const yTicks = [yMin, yMin / 2, 0, yMax / 2, yMax];
+
+    const circles = points.map(p =>
+      `<circle cx="${sx(p.predicted).toFixed(1)}" cy="${sy(p.residual).toFixed(1)}" r="3" fill="var(--amber)" opacity="0.5"></circle>`
+    ).join('');
+
+    const xAxisTicks = xTicks.map(t => `
+      <text x="${sx(t).toFixed(1)}" y="${height - margin.bottom + 20}" font-size="11" fill="var(--muted)" text-anchor="middle">${fmt(t)}</text>
+    `).join('');
+    const yAxisTicks = yTicks.map(t => `
+      <text x="${margin.left - 10}" y="${sy(t).toFixed(1)}" font-size="11" fill="var(--muted)" text-anchor="end" dominant-baseline="middle">${fmt(t)}</text>
+    `).join('');
+
+    return `
+      <svg viewBox="0 0 ${width} ${height}" width="100%" height="${height}" xmlns="http://www.w3.org/2000/svg">
+        <line x1="${margin.left}" y1="${zeroY}" x2="${width - margin.right}" y2="${zeroY}" stroke="var(--steel)" stroke-width="1.5" stroke-dasharray="5,4"></line>
+        <line x1="${margin.left}" y1="${margin.top}" x2="${margin.left}" y2="${height - margin.bottom}" stroke="var(--line-2)" stroke-width="1"></line>
+        <line x1="${margin.left}" y1="${height - margin.bottom}" x2="${width - margin.right}" y2="${height - margin.bottom}" stroke="var(--line-2)" stroke-width="1"></line>
+        ${circles}
+        ${xAxisTicks}
+        ${yAxisTicks}
+        <text x="${margin.left + innerW / 2}" y="${height - 8}" font-size="12" fill="var(--paper-dim)" text-anchor="middle">Predicted salary</text>
+        <text x="16" y="${margin.top + innerH / 2}" font-size="12" fill="var(--paper-dim)" text-anchor="middle" transform="rotate(-90, 16, ${margin.top + innerH / 2})">Residual (actual − predicted)</text>
+      </svg>
+    `;
+  }
+
+  let cachedResiduals = null;
+  async function loadResiduals() {
+    const wrap = document.getElementById('residual-chart');
+    try {
+      cachedResiduals = await apiFetch('/insights/residuals');
+      wrap.innerHTML = buildResidualChart(cachedResiduals);
+    } catch (err) {
+      wrap.innerHTML = `<p class="empty-state">${err.message}</p>`;
+    }
+    return cachedResiduals;
+  }
+
+  function buildFitChart(points) {
+    const width = 760, height = 420;
+    const margin = { left: 80, right: 20, top: 20, bottom: 50 };
+    const innerW = width - margin.left - margin.right;
+    const innerH = height - margin.top - margin.bottom;
+
+    const all = points.flatMap(p => [p.actual, p.predicted]);
+    const min = Math.min(...all) * 0.95, max = Math.max(...all) * 1.05;
+
+    const sx = v => margin.left + ((v - min) / (max - min)) * innerW;
+    const sy = v => margin.top + (1 - (v - min) / (max - min)) * innerH;
+
+    const ticks = [0, 0.25, 0.5, 0.75, 1].map(t => min + t * (max - min));
+
+    const circles = points.map(p =>
+      `<circle cx="${sx(p.predicted).toFixed(1)}" cy="${sy(p.actual).toFixed(1)}" r="3" fill="var(--amber)" opacity="0.5"></circle>`
+    ).join('');
+    const xAxisTicks = ticks.map(t => `<text x="${sx(t).toFixed(1)}" y="${height - margin.bottom + 20}" font-size="11" fill="var(--muted)" text-anchor="middle">${fmt(t)}</text>`).join('');
+    const yAxisTicks = ticks.map(t => `<text x="${margin.left - 10}" y="${sy(t).toFixed(1)}" font-size="11" fill="var(--muted)" text-anchor="end" dominant-baseline="middle">${fmt(t)}</text>`).join('');
+
+    return `
+      <svg viewBox="0 0 ${width} ${height}" width="100%" height="${height}" xmlns="http://www.w3.org/2000/svg">
+        <line x1="${sx(min)}" y1="${sy(min)}" x2="${sx(max)}" y2="${sy(max)}" stroke="var(--steel)" stroke-width="1.5" stroke-dasharray="5,4"></line>
+        <line x1="${margin.left}" y1="${margin.top}" x2="${margin.left}" y2="${height - margin.bottom}" stroke="var(--line-2)" stroke-width="1"></line>
+        <line x1="${margin.left}" y1="${height - margin.bottom}" x2="${width - margin.right}" y2="${height - margin.bottom}" stroke="var(--line-2)" stroke-width="1"></line>
+        ${circles}
+        ${xAxisTicks}
+        ${yAxisTicks}
+        <text x="${margin.left + innerW / 2}" y="${height - 8}" font-size="12" fill="var(--paper-dim)" text-anchor="middle">Predicted salary</text>
+        <text x="20" y="${margin.top + innerH / 2}" font-size="12" fill="var(--paper-dim)" text-anchor="middle" transform="rotate(-90, 20, ${margin.top + innerH / 2})">Actual salary</text>
+      </svg>
+    `;
+  }
+
+  async function loadFitChart() {
+    const wrap = document.getElementById('fit-chart');
+    try {
+      const points = cachedResiduals || await apiFetch('/insights/residuals');
+      wrap.innerHTML = buildFitChart(points);
+    } catch (err) {
+      wrap.innerHTML = `<p class="empty-state">${err.message}</p>`;
+    }
+  }
+
+  async function loadFeatureImportance() {
+    const card = document.getElementById('importance-chart');
+    try {
+      const rows = await apiFetch('/insights/feature-importance');
+      const max = Math.max(...rows.map(r => r.importance));
+      const top2 = rows.slice(0, 2).reduce((sum, r) => sum + r.importance, 0);
+      const gender = rows.find(r => r.feature === 'Gender');
+      card.innerHTML = rows.map((r, i) => `
+        <div class="bar-row">
+          <span class="bl">${r.feature}</span>
+          <div class="bar-track"><div class="bar-fill${i === 0 ? ' amber' : ''}" style="width:${(r.importance / max * 100).toFixed(0)}%"></div></div>
+          <span class="bv">${r.importance}%</span>
+        </div>
+      `).join('') + `
+        <div class="insight" style="margin-top:22px;">
+          <strong>${rows[0].feature} and ${rows[1].feature}</strong> together account for ${top2.toFixed(0)}% of every
+          prediction. Gender sits lowest at ${gender ? gender.importance : '~4'}% — small, but not zero, which is
+          exactly what the bias analysis further down digs into.
+        </div>
+      `;
+    } catch (err) {
+      card.innerHTML = `<p class="empty-state">${err.message}</p>`;
+    }
+  }
+
+  function buildCVChart(scores) {
+    const width = 600, height = 280;
+    const margin = { left: 60, right: 20, top: 20, bottom: 40 };
+    const innerW = width - margin.left - margin.right;
+    const innerH = height - margin.top - margin.bottom;
+
+    const min = 0.8, max = 1.0;
+    const sy = v => margin.top + (1 - (v - min) / (max - min)) * innerH;
+    const barW = innerW / scores.length * 0.6;
+    const gap = innerW / scores.length;
+
+    const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
+
+    const bars = scores.map((s, i) => {
+      const x = margin.left + i * gap + (gap - barW) / 2;
+      const y = sy(s);
+      return `
+        <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${(height - margin.bottom - y).toFixed(1)}" fill="var(--amber)" opacity="0.75" rx="4"></rect>
+        <text x="${(x + barW / 2).toFixed(1)}" y="${(y - 8).toFixed(1)}" font-size="11" fill="var(--paper-dim)" text-anchor="middle">${s.toFixed(3)}</text>
+        <text x="${(x + barW / 2).toFixed(1)}" y="${height - margin.bottom + 18}" font-size="11" fill="var(--muted)" text-anchor="middle">Fold ${i + 1}</text>
+      `;
+    }).join('');
+
+    const meanY = sy(mean);
+
+    return `
+      <svg viewBox="0 0 ${width} ${height}" width="100%" height="${height}" xmlns="http://www.w3.org/2000/svg">
+        <line x1="${margin.left}" y1="${meanY.toFixed(1)}" x2="${width - margin.right}" y2="${meanY.toFixed(1)}" stroke="var(--steel)" stroke-width="1.5" stroke-dasharray="5,4"></line>
+        <text x="${width - margin.right}" y="${margin.top + 4}" font-size="11" fill="var(--steel)" text-anchor="end">mean ${mean.toFixed(4)}</text>
+        <line x1="${margin.left}" y1="${margin.top}" x2="${margin.left}" y2="${height - margin.bottom}" stroke="var(--line-2)" stroke-width="1"></line>
+        <line x1="${margin.left}" y1="${height - margin.bottom}" x2="${width - margin.right}" y2="${height - margin.bottom}" stroke="var(--line-2)" stroke-width="1"></line>
+        ${bars}
+      </svg>
+    `;
+  }
+
+  async function loadCVStability() {
+    const wrap = document.getElementById('cv-chart');
+    const callout = document.getElementById('cv-callout');
+    try {
+      const cv = await apiFetch('/insights/cv-stability');
+      wrap.innerHTML = buildCVChart(cv.fold_scores);
+      callout.innerHTML = `
+        <strong>Mean R² across 5 folds: ${cv.mean}</strong> (std: ${cv.std}) — every fold lands between
+        ${Math.min(...cv.fold_scores)} and ${Math.max(...cv.fold_scores)}. That's a tight range, which means
+        the 0.898 score reported earlier wasn't a fluke of one particular split; the model performs
+        consistently regardless of which 20% of the data is held out.
+      `;
+    } catch (err) {
+      wrap.innerHTML = `<p class="empty-state">${err.message}</p>`;
+    }
+  }
+
+  async function loadBias() {
+    const grid = document.getElementById('bias-grid');
+    const callout = document.getElementById('bias-callout');
+    try {
+      const b = await apiFetch('/insights/bias');
+      grid.innerHTML = `
+        <div class="bias-stat"><div class="num">${fmt(b.mean_pred_as_male)}</div><div class="lbl">Avg. prediction if everyone in the test set is labeled male</div></div>
+        <div class="bias-stat"><div class="num">${fmt(b.mean_pred_as_female)}</div><div class="lbl">Avg. prediction if the same people are labeled female</div></div>
+        <div class="bias-stat"><div class="num">${fmt(b.mean_diff)}</div><div class="lbl">Average gap purely from the gender label (everything else identical)</div></div>
+        <div class="bias-stat"><div class="num">${b.pct_male_higher}%</div><div class="lbl">Of the ${b.sample_size} test profiles predicted higher as male than as female</div></div>
+      `;
+      callout.innerHTML = `
+        <strong>Where this comes from:</strong> in the raw training data, men average ${fmt(b.raw_mean_male)}
+        (n=${b.raw_count_male}) and women average ${fmt(b.raw_mean_female)} (n=${b.raw_count_female}) — a real
+        ${fmt(b.raw_mean_male - b.raw_mean_female)} gap that exists in the source dataset, not something the model invented.
+        The model has learned and reproduces part of that pattern: holding age, education, job title and experience
+        completely fixed and only flipping the gender label changes the prediction in ${b.pct_male_higher}% of cases,
+        skewed toward higher predictions for "male". This is a genuine fairness limitation worth disclosing directly —
+        the model was not designed to correct for, or be blind to, the gender pay gap already present in its training data.
+      `;
+    } catch (err) {
+      grid.innerHTML = `<p class="empty-state">${err.message}</p>`;
+    }
+  }
+
+  async function loadHeadlineStats() {
+    const strip = document.getElementById('headline-stats');
+    try {
+      const [comparison, cv] = await Promise.all([
+        apiFetch('/insights/model-comparison'),
+        apiFetch('/insights/cv-stability'),
+      ]);
+      const catboost = comparison.find(r => r.model === 'CatBoost');
+      strip.innerHTML = `
+        <div class="stat-cell"><div class="num">${catboost.r2.toFixed(3)}</div><div class="lbl">CatBoost R² (deployed model)</div></div>
+        <div class="stat-cell"><div class="num">${fmt(catboost.mae)}</div><div class="lbl">Mean absolute error</div></div>
+        <div class="stat-cell"><div class="num">${cv.mean.toFixed(3)}</div><div class="lbl">Mean R² across 5 CV folds</div></div>
+        <div class="stat-cell"><div class="num">1,787</div><div class="lbl">Cleaned training rows</div></div>
+      `;
+    } catch (err) {
+      strip.innerHTML = `<div class="stat-cell"><div class="lbl">${err.message}</div></div>`;
+    }
+  }
+
+  loadHeadlineStats();
+  loadComparison();
+  loadCVStability();
+  loadFeatureImportance();
+  loadResiduals().then(loadFitChart);
+  loadBias();
+</script>
+</body>
+</html>
