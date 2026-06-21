@@ -63,6 +63,7 @@ def list_projects(
     status: str | None = None,
     mine: bool = False,
     applied: bool = False,
+    collaborating: bool = False,
     user: User | None = Depends(get_current_user_optional),
     db: Session = Depends(get_db),
 ):
@@ -81,6 +82,16 @@ def list_projects(
             for a in db.query(Application).filter(Application.applicant_id == user.id).all()
         ]
         query = query.filter(Project.id.in_(applied_ids or [-1]))
+    if collaborating:
+        if not user:
+            raise HTTPException(status_code=401, detail="Login required")
+        accepted_ids = [
+            a.project_id
+            for a in db.query(Application).filter(
+                Application.applicant_id == user.id, Application.status == "accepted"
+            ).all()
+        ]
+        query = query.filter(Project.id.in_(accepted_ids or [-1]))
 
     projects = query.order_by(Project.created_at.desc()).all()
     return [serialize_project(db, p) for p in projects]

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile — Forge</title>
+<script src="theme.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css?v=2">
+</head>
+<body>
+
+<header>
+  <nav>
+    <a href="forge_landing_page.html" class="logo">forge<span>.</span></a>
+    <div class="nav-links">
+      <a href="projects.html">Projects</a>
+      <a href="insights.html">Model Insights</a>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;" class="logged-out-only">
+      <button class="theme-toggle" id="theme-toggle-btn" type="button" aria-label="Toggle light/dark theme">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
+      <a href="login.html" class="nav-cta" id="nav-cta-btn">Log in</a>
+    </div>
+    <div class="avatar-wrap" id="avatar-wrap" style="display:none;"></div>
+  </nav>
+</header>
+
+<div class="wrap insights-shell">
+  <div id="profile-root">
+    <p class="empty-state">Loading profile…</p>
+  </div>
+</div>
+
+<script src="auth.js"></script>
+<script src="account-menu.js"></script>
+<script>
+  initThemeToggle('theme-toggle-btn');
+  setupAccountMenu();
+
+  const userId = new URLSearchParams(window.location.search).get('id');
+  const root = document.getElementById('profile-root');
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  async function load() {
+    if (!userId) {
+      root.innerHTML = '<p class="empty-state">No profile specified.</p>';
+      return;
+    }
+    try {
+      const user = await apiFetch(`/users/${userId}`);
+      const initials = user.name.trim().split(/\s+/).length > 1
+        ? (user.name.trim().split(/\s+/)[0][0] + user.name.trim().split(/\s+/)[1][0]).toUpperCase()
+        : user.name.slice(0, 2).toUpperCase();
+
+      root.innerHTML = `
+        <div class="dash-card">
+          <div class="profile-header">
+            <div class="profile-avatar">${initials}</div>
+            <div>
+              <h1>${escapeHtml(user.name)}</h1>
+              ${user.role === 'admin' ? '<span class="role-badge admin">admin</span>' : ''}
+            </div>
+          </div>
+          <div class="profile-links">
+            ${user.github_url
+              ? `<a href="${escapeHtml(user.github_url)}" target="_blank" rel="noopener" class="profile-link-btn">GitHub →</a>`
+              : '<span class="profile-link-btn" style="opacity:0.5;cursor:default;">No GitHub linked</span>'}
+            ${user.linkedin_url
+              ? `<a href="${escapeHtml(user.linkedin_url)}" target="_blank" rel="noopener" class="profile-link-btn">LinkedIn →</a>`
+              : '<span class="profile-link-btn" style="opacity:0.5;cursor:default;">No LinkedIn linked</span>'}
+          </div>
+        </div>
+      `;
+    } catch (err) {
+      root.innerHTML = `<p class="empty-state">${err.message}</p>`;
+    }
+  }
+
+  load();
+</script>
+</body>
+</html>

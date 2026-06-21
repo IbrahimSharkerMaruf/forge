@@ -84,6 +84,17 @@
     </div>
   </div>
 
+  <div class="dash-grid">
+    <div class="dash-card">
+      <div class="label">Projects you created</div>
+      <div id="my-projects-list"><p class="empty-state">Loading…</p></div>
+    </div>
+    <div class="dash-card">
+      <div class="label">Projects you're collaborating on</div>
+      <div id="collab-projects-list"><p class="empty-state">Loading…</p></div>
+    </div>
+  </div>
+
   <div class="dash-card" id="admin-panel" style="display:none;">
     <div class="label">Admin panel — all users</div>
     <div style="overflow-x:auto;">
@@ -166,6 +177,7 @@
           </td>
           <td>${u.is_banned ? '<span class="banned-tag">Banned</span>' : 'Active'}</td>
           <td class="row-actions">
+            <a href="profile.html?id=${u.id}" class="btn-secondary">View profile</a>
             <button class="btn-secondary ban-btn" ${u.id === currentUser.id ? 'disabled' : ''}>${u.is_banned ? 'Unban' : 'Ban'}</button>
             <button class="btn-danger delete-btn" ${u.id === currentUser.id ? 'disabled' : ''}>Delete</button>
           </td>
@@ -236,9 +248,55 @@
     }
   });
 
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function projectListItem(p) {
+    return `
+      <a href="project.html?id=${p.id}" class="project-list-item">
+        <div>
+          <div class="pli-title">${escapeHtml(p.title)}</div>
+          <div class="pli-meta">By ${escapeHtml(p.owner.name)} · ${p.applicant_count} applicant${p.applicant_count === 1 ? '' : 's'}</div>
+        </div>
+        <span class="status-tag ${p.status}">${p.status}</span>
+      </a>
+    `;
+  }
+
+  async function loadMyProjects() {
+    const box = document.getElementById('my-projects-list');
+    try {
+      const projects = await apiFetch('/projects?mine=true');
+      box.innerHTML = projects.length
+        ? projects.map(projectListItem).join('')
+        : '<p class="empty-state">You haven\'t posted a project yet. <a href="new-project.html" style="color:var(--amber);">Post one →</a></p>';
+    } catch (err) {
+      box.innerHTML = `<p class="empty-state">${err.message}</p>`;
+    }
+  }
+
+  async function loadCollabProjects() {
+    const box = document.getElementById('collab-projects-list');
+    try {
+      const projects = await apiFetch('/projects?collaborating=true');
+      box.innerHTML = projects.length
+        ? projects.map(projectListItem).join('')
+        : '<p class="empty-state">No accepted collaborations yet. <a href="projects.html" style="color:var(--amber);">Browse open projects →</a></p>';
+    } catch (err) {
+      box.innerHTML = `<p class="empty-state">${err.message}</p>`;
+    }
+  }
+
   (async () => {
     currentUser = await requireLogin();
-    if (currentUser) renderProfile(currentUser);
+    if (currentUser) {
+      renderProfile(currentUser);
+      loadMyProjects();
+      loadCollabProjects();
+    }
   })();
 </script>
 </body>

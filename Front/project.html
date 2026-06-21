@@ -16,14 +16,13 @@
     <a href="forge_landing_page.html" class="logo">forge<span>.</span></a>
     <div class="nav-links">
       <a href="projects.html">Projects</a>
-      <a href="login.html" id="nav-login-link" class="logged-out-only">Log in</a>
     </div>
     <div style="display:flex;align-items:center;gap:14px;" class="logged-out-only">
       <button class="theme-toggle" id="theme-toggle-btn" type="button" aria-label="Toggle light/dark theme">
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
         <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
       </button>
-      <a href="signup.html" class="nav-cta" id="nav-cta-btn">Get early access</a>
+      <a href="login.html" class="nav-cta" id="nav-cta-btn">Log in</a>
     </div>
     <div class="avatar-wrap" id="avatar-wrap" style="display:none;"></div>
   </nav>
@@ -88,7 +87,7 @@
              ${project.credited.map(c => `
                <div class="credited-chip">
                  <span class="chip-avatar">${initialsForName(c.name)}</span>
-                 <span>${escapeHtml(c.name)}</span>
+                 <a href="profile.html?id=${c.id}" style="color:var(--paper);">${escapeHtml(c.name)}</a>
                  ${c.github_url ? `<a href="${escapeHtml(c.github_url)}" target="_blank" style="color:var(--steel);">GitHub</a>` : ''}
                  ${c.linkedin_url ? `<a href="${escapeHtml(c.linkedin_url)}" target="_blank" style="color:var(--steel);">LinkedIn</a>` : ''}
                </div>
@@ -103,7 +102,7 @@
           <span class="status-tag ${project.status}">${project.status}</span>
           <h1 style="margin-top:10px;">${escapeHtml(project.title)}</h1>
           <p style="color:var(--paper-dim);margin-top:8px;">
-            Posted by ${escapeHtml(project.owner.name)} · ${project.applicant_count} applicant${project.applicant_count === 1 ? '' : 's'}
+            Posted by <a href="profile.html?id=${project.owner.id}" style="color:var(--steel);">${escapeHtml(project.owner.name)}</a> · ${project.applicant_count} applicant${project.applicant_count === 1 ? '' : 's'}
           </p>
         </div>
         ${isOwner() && project.status === 'open' ? '<button class="btn-secondary" id="complete-btn">Mark as completed</button>' : ''}
@@ -172,11 +171,12 @@
     return `
       <div class="app-row">
         <div class="app-row-head">
-          <strong>${escapeHtml(a.applicant.name)}</strong>
+          <a href="profile.html?id=${a.applicant.id}" style="font-weight:600;color:var(--paper);">${escapeHtml(a.applicant.name)}</a>
           <span class="status-tag ${a.status === 'accepted' ? 'completed' : a.status === 'rejected' ? '' : 'open'}">${a.status}</span>
         </div>
         <p>${escapeHtml(a.message)}</p>
         <div class="row-actions">
+          <a href="profile.html?id=${a.applicant.id}" class="btn-secondary">View profile</a>
           ${a.status === 'pending' ? `<button class="btn-secondary" id="accept-${a.id}">Accept</button><button class="btn-danger" id="reject-${a.id}">Reject</button>` : ''}
           <button class="btn-secondary" id="message-${a.id}">Message</button>
         </div>
