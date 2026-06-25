@@ -72,6 +72,17 @@
 
     <hr class="section-divider">
 
+    <div class="insights-section" style="margin-top:0;">
+      <h2>What if...?</h2>
+      <p class="section-sub">
+        Counterfactual explanations: the same prediction, re-run with exactly one input changed —
+        a different (and more intuitive) way of explaining the model than the SHAP breakdown above.
+      </p>
+      <div class="chart-card" id="counterfactual-card"><p class="empty-state">Loading…</p></div>
+    </div>
+
+    <hr class="section-divider">
+
     <div class="insights-section" id="job-compare-section" style="margin-top:0;">
       <h2>Compared to others with the same job title</h2>
       <p class="section-sub" id="job-compare-sub"></p>
@@ -118,6 +129,7 @@
       renderRecap(data);
       renderTornado(data.breakdown);
       renderHistogram(data);
+      renderCounterfactuals(data.counterfactuals);
       renderJobCompare(data.job_stats);
     } catch (err) {
       document.getElementById('tornado-chart').innerHTML = `<p class="empty-state">${err.message}</p>`;
@@ -185,6 +197,25 @@
     document.getElementById('histogram-chart').innerHTML = buildHistogram(data.histogram, data.predicted_bin);
     document.getElementById('percentile-text').textContent =
       `This prediction is higher than ${data.percentile}% of the 1,787 salaries in the cleaned training data.`;
+  }
+
+  function renderCounterfactuals(scenarios) {
+    const card = document.getElementById('counterfactual-card');
+    if (!scenarios || !scenarios.length) {
+      card.innerHTML = '<p class="empty-state">No applicable scenarios for this input combination.</p>';
+      return;
+    }
+    card.innerHTML = `
+      <div class="cf-grid">
+        ${scenarios.map(s => `
+          <div class="cf-card">
+            <div class="cf-label">${s.label}</div>
+            <div class="cf-amount">${fmt(s.prediction)}</div>
+            <div class="cf-delta ${s.delta >= 0 ? 'up' : 'down'}">${s.delta >= 0 ? '+' : ''}${fmt(s.delta)}</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
   }
 
   function renderJobCompare(stats) {

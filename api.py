@@ -64,6 +64,50 @@ def _validate_inputs(job_title: str, age: int, experience: int) -> None:
         raise HTTPException(status_code=400, detail="Experience can't exceed age - 18")
 
 
+EDUCATION_LEVELS = ["High School", "Bachelor", "Master", "PhD"]
+
+
+def _build_counterfactuals(
+    age: int, gender: str, education: str, job_title: str, experience: int, base_prediction: float
+) -> list[dict]:
+    """Counterfactual explanations: re-run the same prediction with exactly one
+    input changed, so the effect of that single change is isolated and concrete
+    -- a different (and more intuitive) explainability technique than SHAP."""
+    scenarios = []
+
+    if experience + 2 <= max(0, age - 18):
+        pred, _ = _predict_with_contributions(age, gender, education, job_title, experience + 2)
+        scenarios.append(
+            {"label": "With 2 more years of experience", "prediction": round(pred), "delta": round(pred - base_prediction)}
+        )
+
+    if education in EDUCATION_LEVELS:
+        idx = EDUCATION_LEVELS.index(education)
+        if idx < len(EDUCATION_LEVELS) - 1:
+            next_edu = EDUCATION_LEVELS[idx + 1]
+            pred, _ = _predict_with_contributions(age, gender, next_edu, job_title, experience)
+            scenarios.append(
+                {"label": f"With a {next_edu}'s instead of {education}'s", "prediction": round(pred), "delta": round(pred - base_prediction)}
+            )
+
+    pred, _ = _predict_with_contributions(age + 5, gender, education, job_title, experience)
+    scenarios.append(
+        {"label": "5 years older (same experience)", "prediction": round(pred), "delta": round(pred - base_prediction)}
+    )
+
+    other_gender = "Female" if gender.lower() == "male" else "Male"
+    pred, _ = _predict_with_contributions(age, other_gender, education, job_title, experience)
+    scenarios.append(
+        {
+            "label": f"Labeled {other_gender.lower()} instead of {gender.lower()} (everything else identical)",
+            "prediction": round(pred),
+            "delta": round(pred - base_prediction),
+        }
+    )
+
+    return scenarios
+
+
 def _predict_with_contributions(age: int, gender: str, education: str, job_title: str, experience: int):
     # The model was trained on lowercased Gender/Job Title strings (see salary.ipynb's
     # cleaning step) -- CatBoost's categorical matching is case-sensitive, so passing
@@ -143,6 +187,8 @@ def predict_details(age: int, gender: str, education: str, job_title: str, exper
             "max": round(float(same_title["Salary"].max())),
         }
 
+    counterfactuals = _build_counterfactuals(age, gender, education, job_title, experience, prediction)
+
     return {
         "prediction": round(prediction),
         "range_low": round(prediction - MAE),
@@ -152,6 +198,7 @@ def predict_details(age: int, gender: str, education: str, job_title: str, exper
         "histogram": histogram,
         "predicted_bin": predicted_bin,
         "job_stats": job_stats,
+        "counterfactuals": counterfactuals,
     }
 
 
