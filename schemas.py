@@ -26,7 +26,7 @@ class ProfileUpdate(BaseModel):
 
 
 class UserOut(BaseModel):
-    id: int
+    id: str
     name: str
     email: EmailStr
     role: str
@@ -40,7 +40,7 @@ class UserOut(BaseModel):
 
 
 class PublicProfile(BaseModel):
-    id: int
+    id: str
     name: str
     role: str
     github_url: str | None
@@ -69,8 +69,8 @@ class ProjectUpdate(BaseModel):
 
 
 class ApplicationOut(BaseModel):
-    id: int
-    project_id: int
+    id: str
+    project_id: str
     applicant: PublicProfile
     message: str
     status: str
@@ -81,7 +81,7 @@ class ApplicationOut(BaseModel):
 
 
 class ProjectOut(BaseModel):
-    id: int
+    id: str
     owner: PublicProfile
     title: str
     description: str
@@ -109,14 +109,14 @@ class ApplicationUpdate(BaseModel):
 
 
 class MessageCreate(BaseModel):
-    recipient_id: int
+    recipient_id: str
     body: str = Field(min_length=1, max_length=4000)
 
 
 class MessageOut(BaseModel):
-    id: int
-    sender_id: int
-    recipient_id: int
+    id: str
+    sender_id: str
+    recipient_id: str
     body: str
     created_at: datetime
 

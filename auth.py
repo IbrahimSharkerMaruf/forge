@@ -5,10 +5,8 @@ import bcrypt
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.orm import Session
 
-from db import get_db
-from models import User
+import models
 
 # In production (Azure), set FORGE_JWT_SECRET as an App Service config value.
 JWT_SECRET = os.environ.get("FORGE_JWT_SECRET", "dev-only-secret-change-me-32-bytes-minimum")
@@ -26,18 +24,16 @@ def verify_password(password: str, password_hash: str) -> bool:
     return bcrypt.checkpw(password.encode(), password_hash.encode())
 
 
-def create_access_token(user_id: int, role: str) -> str:
+def create_access_token(user_id: str, role: str) -> str:
     payload = {
-        "sub": str(user_id),
+        "sub": user_id,
         "role": role,
         "exp": datetime.now(timezone.utc) + timedelta(minutes=JWT_EXPIRES_MINUTES),
     }
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 
-def get_current_user(
-    token: str | None = Depends(oauth2_scheme), db: Session = Depends(get_db)
-) -> User:
+def get_current_user(token: str | None = Depends(oauth2_scheme)) -> dict:
     credentials_error = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token"
     )
@@ -45,30 +41,28 @@ def get_current_user(
         raise credentials_error
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        user_id = int(payload["sub"])
-    except (jwt.PyJWTError, KeyError, ValueError):
+        user_id = payload["sub"]
+    except (jwt.PyJWTError, KeyError):
         raise credentials_error
 
-    user = db.get(User, user_id)
+    user = models.get_user(user_id)
     if user is None:
         raise credentials_error
-    if user.is_banned:
+    if user["is_banned"]:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is banned")
     return user
 
 
-def require_admin(user: User = Depends(get_current_user)) -> User:
-    if user.role != "admin":
+def require_admin(user: dict = Depends(get_current_user)) -> dict:
+    if user["role"] != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
     return user
 
 
-def get_current_user_optional(
-    token: str | None = Depends(oauth2_scheme), db: Session = Depends(get_db)
-) -> User | None:
+def get_current_user_optional(token: str | None = Depends(oauth2_scheme)) -> dict | None:
     if not token:
         return None
     try:
-        return get_current_user(token, db)
+        return get_current_user(token)
     except HTTPException:
         return None

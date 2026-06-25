@@ -1,14 +1,15 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
+import os
 
-engine = create_engine("sqlite:///forge.db", connect_args={"check_same_thread": False})
-SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
-Base = declarative_base()
+from azure.cosmos import CosmosClient
 
+COSMOS_ENDPOINT = os.environ["COSMOS_ENDPOINT"]
+COSMOS_KEY = os.environ["COSMOS_KEY"]
+COSMOS_DATABASE = os.environ.get("COSMOS_DATABASE", "forge-db")
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+_client = CosmosClient(COSMOS_ENDPOINT, COSMOS_KEY)
+_database = _client.get_database_client(COSMOS_DATABASE)
+
+users_container = _database.get_container_client("users")
+projects_container = _database.get_container_client("projects")
+applications_container = _database.get_container_client("applications")
+messages_container = _database.get_container_client("messages")

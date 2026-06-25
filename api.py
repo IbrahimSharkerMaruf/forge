@@ -13,8 +13,6 @@ from auth_routes import router as auth_router
 from projects_routes import router as projects_router
 from insights_routes import router as insights_router, _load_cleaned_data
 from jobs_routes import router as jobs_router
-from db import Base, engine
-import models  # noqa: F401 -- registers User with Base before create_all
 
 MAE = 11576  # from salary.ipynb evaluation, used to show a likely range around the point estimate
 CAT_FEATURE_INDICES = [1, 2, 3]  # Gender, Education Level, Job Title
@@ -35,8 +33,6 @@ JOB_TITLES = sorted(
 )
 
 CLEANED_DATA = _load_cleaned_data()
-
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Forge Salary Predictor API")
 

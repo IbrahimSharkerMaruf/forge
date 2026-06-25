@@ -1,66 +1,231 @@
+"""Cosmos DB data-access helpers. There's no ORM here -- each container holds
+plain JSON documents (partition key = /id on all four containers). These
+functions centralize the query/CRUD patterns the route files need, playing
+the same role the SQLAlchemy models used to.
+"""
+
+import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-
-from db import Base
+from db import applications_container, messages_container, projects_container, users_container
 
 
-class User(Base):
-    __tablename__ = "users"
+def new_id() -> str:
+    return str(uuid.uuid4())
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    name: Mapped[str] = mapped_column(String(120))
-    email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
-    password_hash: Mapped[str] = mapped_column(String(255))
-    role: Mapped[str] = mapped_column(String(20), default="user")  # "user" | "admin"
-    github_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    linkedin_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    is_banned: Mapped[bool] = mapped_column(Boolean, default=False)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(timezone.utc)
+
+def now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+# ---------- Users ----------
+
+
+def create_user(name: str, email: str, password_hash: str, role: str = "user") -> dict:
+    user = {
+        "id": new_id(),
+        "name": name,
+        "email": email,
+        "password_hash": password_hash,
+        "role": role,
+        "github_url": None,
+        "linkedin_url": None,
+        "is_banned": False,
+        "created_at": now_iso(),
+    }
+    users_container.create_item(user)
+    return user
+
+
+def get_user(user_id: str) -> dict | None:
+    try:
+        return users_container.read_item(item=user_id, partition_key=user_id)
+    except Exception:
+        return None
+
+
+def get_user_by_email(email: str) -> dict | None:
+    results = list(
+        users_container.query_items(
+            query="SELECT * FROM c WHERE c.email = @email",
+            parameters=[{"name": "@email", "value": email}],
+            enable_cross_partition_query=True,
+        )
+    )
+    return results[0] if results else None
+
+
+def update_user(user: dict, **fields) -> dict:
+    user.update(fields)
+    users_container.replace_item(item=user["id"], body=user)
+    return user
+
+
+def list_all_users() -> list[dict]:
+    users = list(
+        users_container.query_items(query="SELECT * FROM c", enable_cross_partition_query=True)
+    )
+    users.sort(key=lambda u: u["created_at"])
+    return users
+
+
+def delete_user(user_id: str) -> None:
+    users_container.delete_item(item=user_id, partition_key=user_id)
+
+
+# ---------- Projects ----------
+
+
+def create_project(owner_id: str, title: str, description: str, skills: str) -> dict:
+    project = {
+        "id": new_id(),
+        "owner_id": owner_id,
+        "title": title,
+        "description": description,
+        "skills": skills,
+        "status": "open",
+        "created_at": now_iso(),
+    }
+    projects_container.create_item(project)
+    return project
+
+
+def get_project(project_id: str) -> dict | None:
+    try:
+        return projects_container.read_item(item=project_id, partition_key=project_id)
+    except Exception:
+        return None
+
+
+def update_project(project: dict, **fields) -> dict:
+    project.update(fields)
+    projects_container.replace_item(item=project["id"], body=project)
+    return project
+
+
+def list_projects(
+    status: str | None = None, owner_id: str | None = None, ids: list[str] | None = None
+) -> list[dict]:
+    conditions = []
+    parameters = []
+    if status:
+        conditions.append("c.status = @status")
+        parameters.append({"name": "@status", "value": status})
+    if owner_id:
+        conditions.append("c.owner_id = @owner_id")
+        parameters.append({"name": "@owner_id", "value": owner_id})
+    if ids is not None:
+        if not ids:
+            return []
+        id_params = [f"@id{i}" for i in range(len(ids))]
+        conditions.append(f"c.id IN ({', '.join(id_params)})")
+        parameters.extend({"name": p, "value": v} for p, v in zip(id_params, ids))
+
+    query = "SELECT * FROM c"
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+
+    projects = list(
+        projects_container.query_items(
+            query=query, parameters=parameters, enable_cross_partition_query=True
+        )
+    )
+    projects.sort(key=lambda p: p["created_at"], reverse=True)
+    return projects
+
+
+def delete_project(project_id: str) -> None:
+    projects_container.delete_item(item=project_id, partition_key=project_id)
+
+
+# ---------- Applications ----------
+
+
+def create_application(project_id: str, applicant_id: str, message: str) -> dict:
+    application = {
+        "id": new_id(),
+        "project_id": project_id,
+        "applicant_id": applicant_id,
+        "message": message,
+        "status": "pending",
+        "created_at": now_iso(),
+    }
+    applications_container.create_item(application)
+    return application
+
+
+def get_application(application_id: str) -> dict | None:
+    try:
+        return applications_container.read_item(item=application_id, partition_key=application_id)
+    except Exception:
+        return None
+
+
+def update_application(application: dict, **fields) -> dict:
+    application.update(fields)
+    applications_container.replace_item(item=application["id"], body=application)
+    return application
+
+
+def list_applications(
+    project_id: str | None = None, applicant_id: str | None = None, status: str | None = None
+) -> list[dict]:
+    conditions = []
+    parameters = []
+    if project_id:
+        conditions.append("c.project_id = @project_id")
+        parameters.append({"name": "@project_id", "value": project_id})
+    if applicant_id:
+        conditions.append("c.applicant_id = @applicant_id")
+        parameters.append({"name": "@applicant_id", "value": applicant_id})
+    if status:
+        conditions.append("c.status = @status")
+        parameters.append({"name": "@status", "value": status})
+
+    query = "SELECT * FROM c"
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+
+    return list(
+        applications_container.query_items(
+            query=query, parameters=parameters, enable_cross_partition_query=True
+        )
     )
 
 
-class Project(Base):
-    __tablename__ = "projects"
+def delete_applications_for_project(project_id: str) -> None:
+    for app in list_applications(project_id=project_id):
+        applications_container.delete_item(item=app["id"], partition_key=app["id"])
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
-    title: Mapped[str] = mapped_column(String(160))
-    description: Mapped[str] = mapped_column(Text)
-    skills: Mapped[str] = mapped_column(String(400), default="")  # comma-separated
-    status: Mapped[str] = mapped_column(String(20), default="open")  # "open" | "completed"
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(timezone.utc)
+
+# ---------- Messages ----------
+
+
+def create_message(project_id: str, sender_id: str, recipient_id: str, body: str) -> dict:
+    message = {
+        "id": new_id(),
+        "project_id": project_id,
+        "sender_id": sender_id,
+        "recipient_id": recipient_id,
+        "body": body,
+        "created_at": now_iso(),
+    }
+    messages_container.create_item(message)
+    return message
+
+
+def list_messages_for_project(project_id: str) -> list[dict]:
+    messages = list(
+        messages_container.query_items(
+            query="SELECT * FROM c WHERE c.project_id = @project_id",
+            parameters=[{"name": "@project_id", "value": project_id}],
+            enable_cross_partition_query=True,
+        )
     )
-
-    owner: Mapped["User"] = relationship(foreign_keys=[owner_id])
-
-
-class Application(Base):
-    __tablename__ = "applications"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"))
-    applicant_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
-    message: Mapped[str] = mapped_column(Text)
-    status: Mapped[str] = mapped_column(String(20), default="pending")  # pending|accepted|rejected
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(timezone.utc)
-    )
-
-    applicant: Mapped["User"] = relationship(foreign_keys=[applicant_id])
+    messages.sort(key=lambda m: m["created_at"])
+    return messages
 
 
-class Message(Base):
-    __tablename__ = "messages"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"))
-    sender_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
-    recipient_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
-    body: Mapped[str] = mapped_column(Text)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(timezone.utc)
-    )
+def delete_messages_for_project(project_id: str) -> None:
+    for m in list_messages_for_project(project_id):
+        messages_container.delete_item(item=m["id"], partition_key=m["id"])

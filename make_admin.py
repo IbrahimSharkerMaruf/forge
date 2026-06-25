@@ -5,21 +5,20 @@ Usage: python make_admin.py someone@example.com
 
 import sys
 
-from db import Base, SessionLocal, engine
-from models import User
+from dotenv import load_dotenv
+
+load_dotenv()
+
+import models  # noqa: E402 -- must load .env (Cosmos credentials) before importing models/db
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         sys.exit("Usage: python make_admin.py <email>")
 
-    Base.metadata.create_all(bind=engine)
     email = sys.argv[1]
-
-    db = SessionLocal()
-    user = db.query(User).filter(User.email == email).first()
+    user = models.get_user_by_email(email)
     if user is None:
         sys.exit(f"No user found with email {email!r}. Sign up first, then promote.")
 
-    user.role = "admin"
-    db.commit()
+    models.update_user(user, role="admin")
     print(f"{email} is now an admin.")
