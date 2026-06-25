@@ -12,21 +12,16 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v2
 
-    - name: Set up Python version
-      uses: actions/setup-python@v1
-      with:
-        python-version: '3.13'
-    
-    - name: Build using AppService-Build
-      uses: azure/appservice-build@v2
-      with:
-        platform: python
-        platform-version: '3.13'
-    
+    steps:
+    - uses: actions/checkout@v4
+
+    # No local build step here -- the bundled azure/appservice-build action only
+    # supports Python up to 3.12 (stale Oryx version), while this app targets 3.13.
+    # Azure's own server-side Oryx build (SCM_DO_BUILD_DURING_DEPLOYMENT, on by
+    # default for Linux Python apps) supports 3.13 and installs requirements.txt
+    # during deployment instead -- same mechanism that already worked previously.
+
     - name: 'Deploy to Azure Web App'
       uses: azure/webapps-deploy@v2
       with: 
