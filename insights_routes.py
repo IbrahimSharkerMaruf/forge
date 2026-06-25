@@ -127,29 +127,39 @@ def _compute_insights() -> dict:
     }
 
 
-_INSIGHTS = _compute_insights()
+_INSIGHTS_CACHE: dict | None = None
+
+
+def _get_insights() -> dict:
+    # Computed lazily on first request rather than at import time -- training
+    # 8 models (comparison + 5-fold CV) blocked app startup long enough to
+    # exceed Azure's container startup probe timeout on a constrained tier.
+    global _INSIGHTS_CACHE
+    if _INSIGHTS_CACHE is None:
+        _INSIGHTS_CACHE = _compute_insights()
+    return _INSIGHTS_CACHE
 
 
 @router.get("/insights/model-comparison")
 def get_model_comparison():
-    return _INSIGHTS["comparison"]
+    return _get_insights()["comparison"]
 
 
 @router.get("/insights/residuals")
 def get_residuals():
-    return _INSIGHTS["residuals"]
+    return _get_insights()["residuals"]
 
 
 @router.get("/insights/bias")
 def get_bias():
-    return _INSIGHTS["bias"]
+    return _get_insights()["bias"]
 
 
 @router.get("/insights/feature-importance")
 def get_feature_importance():
-    return _INSIGHTS["feature_importance"]
+    return _get_insights()["feature_importance"]
 
 
 @router.get("/insights/cv-stability")
 def get_cv_stability():
-    return _INSIGHTS["cv_stability"]
+    return _get_insights()["cv_stability"]
