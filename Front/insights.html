@@ -159,11 +159,26 @@
 
   function fmt(n) { return '$' + Math.round(n).toLocaleString('en-US'); }
 
+  // Insights endpoints compute in a background thread after a deploy/restart
+  // and return 503 ("still computing") until ready -- retry instead of
+  // treating that as a real failure.
+  async function fetchInsight(path, attempt = 1) {
+    try {
+      return await apiFetch(path);
+    } catch (err) {
+      if (err.message.includes('Still computing') && attempt < 15) {
+        await new Promise(r => setTimeout(r, 3000));
+        return fetchInsight(path, attempt + 1);
+      }
+      throw err;
+    }
+  }
+
   async function loadComparison() {
     const tbody = document.querySelector('#comparison-table tbody');
     const note = document.getElementById('comparison-note');
     try {
-      const rows = await apiFetch('/insights/model-comparison');
+      const rows = await fetchInsight('/insights/model-comparison');
       tbody.innerHTML = rows.map((r, i) => `
         <tr class="${i === 0 ? 'winner-row' : ''}">
           <td>${r.model}${i === 0 ? '<span class="winner-badge">Best</span>' : ''}</td>
@@ -229,7 +244,7 @@
   async function loadResiduals() {
     const wrap = document.getElementById('residual-chart');
     try {
-      cachedResiduals = await apiFetch('/insights/residuals');
+      cachedResiduals = await fetchInsight('/insights/residuals');
       wrap.innerHTML = buildResidualChart(cachedResiduals);
     } catch (err) {
       wrap.innerHTML = `<p class="empty-state">${err.message}</p>`;
@@ -274,7 +289,7 @@
   async function loadFitChart() {
     const wrap = document.getElementById('fit-chart');
     try {
-      const points = cachedResiduals || await apiFetch('/insights/residuals');
+      const points = cachedResiduals || await fetchInsight('/insights/residuals');
       wrap.innerHTML = buildFitChart(points);
     } catch (err) {
       wrap.innerHTML = `<p class="empty-state">${err.message}</p>`;
@@ -284,7 +299,7 @@
   async function loadFeatureImportance() {
     const card = document.getElementById('importance-chart');
     try {
-      const rows = await apiFetch('/insights/feature-importance');
+      const rows = await fetchInsight('/insights/feature-importance');
       const max = Math.max(...rows.map(r => r.importance));
       const top2 = rows.slice(0, 2).reduce((sum, r) => sum + r.importance, 0);
       const gender = rows.find(r => r.feature === 'Gender');
@@ -346,7 +361,7 @@
     const wrap = document.getElementById('cv-chart');
     const callout = document.getElementById('cv-callout');
     try {
-      const cv = await apiFetch('/insights/cv-stability');
+      const cv = await fetchInsight('/insights/cv-stability');
       wrap.innerHTML = buildCVChart(cv.fold_scores);
       callout.innerHTML = `
         <strong>Mean R² across 5 folds: ${cv.mean}</strong> (std: ${cv.std}) — every fold lands between
@@ -363,7 +378,7 @@
     const grid = document.getElementById('bias-grid');
     const callout = document.getElementById('bias-callout');
     try {
-      const b = await apiFetch('/insights/bias');
+      const b = await fetchInsight('/insights/bias');
       grid.innerHTML = `
         <div class="bias-stat"><div class="num">${fmt(b.mean_pred_as_male)}</div><div class="lbl">Avg. prediction if everyone in the test set is labeled male</div></div>
         <div class="bias-stat"><div class="num">${fmt(b.mean_pred_as_female)}</div><div class="lbl">Avg. prediction if the same people are labeled female</div></div>
@@ -388,8 +403,8 @@
     const strip = document.getElementById('headline-stats');
     try {
       const [comparison, cv] = await Promise.all([
-        apiFetch('/insights/model-comparison'),
-        apiFetch('/insights/cv-stability'),
+        fetchInsight('/insights/model-comparison'),
+        fetchInsight('/insights/cv-stability'),
       ]);
       const catboost = comparison.find(r => r.model === 'CatBoost');
       strip.innerHTML = `

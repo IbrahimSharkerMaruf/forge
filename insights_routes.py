@@ -5,10 +5,12 @@ from the same cleaned dataset and train/test split used in salary.ipynb
 something that needs to run per-request.
 """
 
+import threading
+
 import numpy as np
 import pandas as pd
 from catboost import CatBoostRegressor
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error, r2_score
 from sklearn.model_selection import KFold, train_test_split
@@ -128,15 +130,34 @@ def _compute_insights() -> dict:
 
 
 _INSIGHTS_CACHE: dict | None = None
+_INSIGHTS_ERROR: str | None = None
+
+
+def _compute_in_background() -> None:
+    global _INSIGHTS_CACHE, _INSIGHTS_ERROR
+    try:
+        _INSIGHTS_CACHE = _compute_insights()
+    except Exception as e:  # noqa: BLE001 -- surface any failure via the API instead of crashing the thread silently
+        _INSIGHTS_ERROR = str(e)
+
+
+# Training 8 models (comparison + 5-fold CV) is too slow to run inline, either
+# at import time (blocked app startup past Azure's container probe timeout) or
+# within a single request (blocked past Azure's front-end request timeout on a
+# constrained tier). Runs in a background thread instead so startup is instant
+# and requests never hang -- they get a clear "still computing" response until
+# the cache is ready, then served from memory after that.
+threading.Thread(target=_compute_in_background, daemon=True).start()
 
 
 def _get_insights() -> dict:
-    # Computed lazily on first request rather than at import time -- training
-    # 8 models (comparison + 5-fold CV) blocked app startup long enough to
-    # exceed Azure's container startup probe timeout on a constrained tier.
-    global _INSIGHTS_CACHE
+    if _INSIGHTS_ERROR is not None:
+        raise HTTPException(status_code=500, detail=f"Insights computation failed: {_INSIGHTS_ERROR}")
     if _INSIGHTS_CACHE is None:
-        _INSIGHTS_CACHE = _compute_insights()
+        raise HTTPException(
+            status_code=503,
+            detail="Still computing model insights (this runs once after a deploy/restart) -- try again in a few seconds.",
+        )
     return _INSIGHTS_CACHE
 
 
