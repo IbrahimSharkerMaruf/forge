@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How it works — Forge</title>
+<script src="theme.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css?v=8">
+</head>
+<body>
+
+<header>
+  <nav>
+    <a href="forge_landing_page.html" class="logo">forge<span>.</span></a>
+    <div class="nav-links">
+      <a href="forge_landing_page.html#preview">Salary tool</a>
+      <a href="projects.html">Projects</a>
+      <a href="insights.html">Model Insights</a>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;" class="logged-out-only">
+      <button class="theme-toggle" id="theme-toggle-btn" type="button" aria-label="Toggle light/dark theme">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
+      <a href="login.html" class="nav-cta" id="nav-cta-btn">Log in</a>
+    </div>
+    <div class="avatar-wrap" id="avatar-wrap" style="display:none;"></div>
+  </nav>
+</header>
+
+<div class="wrap insights-shell page-glow">
+  <div class="eyebrow">How it works</div>
+  <h1>Three tools, one goal: turn ideas into something you can point to</h1>
+  <p class="lede">
+    Forge doesn't try to do everything. It covers three steps a student actually goes through —
+    figuring out what a role pays, finding one, and building something real along the way.
+  </p>
+</div>
+
+<div class="wrap insights-shell" style="padding-top:0;">
+  <div class="insights-section" style="margin-top:0;">
+    <h2>1. Predict a salary</h2>
+    <p class="section-sub">
+      Enter an age, education level, job title and years of experience and a CatBoost model trained on
+      real salary data gives a point estimate with a likely range — plus a full breakdown of which inputs
+      pushed the number up or down, and a few "what if" scenarios. No login required.
+    </p>
+  </div>
+
+  <hr class="section-divider">
+
+  <div class="insights-section">
+    <h2>2. Find real listings</h2>
+    <p class="section-sub">
+      The same job title feeds straight into live job listings pulled from Adzuna, so the prediction
+      isn't just an abstract number — you can immediately see who's actually hiring for it.
+    </p>
+  </div>
+
+  <hr class="section-divider">
+
+  <div class="insights-section">
+    <h2>3. Build something with other students</h2>
+    <p class="section-sub">
+      Post a project, list the skills you need, and let other students apply. Message applicants directly,
+      accept the ones you want to work with, and mark the project completed when it's done — everyone
+      involved gets credited on it.
+    </p>
+  </div>
+
+  <hr class="section-divider">
+
+  <div class="insights-section">
+    <a href="forge_landing_page.html#preview" class="btn-secondary">Try the salary tool →</a>
+  </div>
+</div>
+
+<script src="auth.js"></script>
+<script src="account-menu.js"></script>
+<script>
+  initThemeToggle('theme-toggle-btn');
+  setupAccountMenu();
+</script>
+</body>
+</html>

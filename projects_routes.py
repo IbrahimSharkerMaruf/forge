@@ -12,15 +12,18 @@ from schemas import (
     ProjectDetail,
     ProjectOut,
     ProjectUpdate,
+    RatingRequest,
     ThreadSummary,
 )
 
 router = APIRouter()
 
 
-def serialize_project(project: dict) -> dict:
+def serialize_project(project: dict, viewer_id: str | None = None) -> dict:
     applicant_count = len(models.list_applications(project_id=project["id"]))
     owner = models.get_user(project["owner_id"])
+    ratings = project.get("ratings") or {}
+    avg_rating = round(sum(ratings.values()) / len(ratings), 1) if ratings else None
     return {
         "id": project["id"],
         "owner": owner,
@@ -30,6 +33,9 @@ def serialize_project(project: dict) -> dict:
         "status": project["status"],
         "created_at": project["created_at"],
         "applicant_count": applicant_count,
+        "avg_rating": avg_rating,
+        "rating_count": len(ratings),
+        "my_rating": ratings.get(viewer_id) if viewer_id else None,
     }
 
 
@@ -57,7 +63,7 @@ def create_project(req: ProjectCreate, user: dict = Depends(get_current_user)):
     project = models.create_project(
         owner_id=user["id"], title=req.title, description=req.description, skills=skills
     )
-    return serialize_project(project)
+    return serialize_project(project, viewer_id=user["id"])
 
 
 @router.get("/projects", response_model=list[ProjectOut])
@@ -88,13 +94,14 @@ def list_projects(
         ]
 
     projects = models.list_projects(status=status, owner_id=owner_id, ids=ids)
-    return [serialize_project(p) for p in projects]
+    viewer_id = user["id"] if user else None
+    return [serialize_project(p, viewer_id=viewer_id) for p in projects]
 
 
 @router.get("/projects/{project_id}", response_model=ProjectDetail)
 def get_project(project_id: str, user: dict | None = Depends(get_current_user_optional)):
     project = get_project_or_404(project_id)
-    data = serialize_project(project)
+    data = serialize_project(project, viewer_id=user["id"] if user else None)
 
     credited = []
     if project["status"] == "completed":
@@ -138,7 +145,7 @@ def update_project(project_id: str, req: ProjectUpdate, user: dict = Depends(get
         fields["status"] = req.status
 
     project = models.update_project(project, **fields)
-    return serialize_project(project)
+    return serialize_project(project, viewer_id=user["id"])
 
 
 @router.delete("/projects/{project_id}", status_code=204)
@@ -149,6 +156,15 @@ def delete_project(project_id: str, user: dict = Depends(get_current_user)):
     models.delete_applications_for_project(project_id)
     models.delete_messages_for_project(project_id)
     models.delete_project(project_id)
+
+
+@router.post("/projects/{project_id}/rate", response_model=ProjectOut)
+def rate_project(project_id: str, req: RatingRequest, user: dict = Depends(get_current_user)):
+    project = get_project_or_404(project_id)
+    if project["owner_id"] == user["id"]:
+        raise HTTPException(status_code=400, detail="You can't rate your own project")
+    project = models.rate_project(project, user["id"], req.stars)
+    return serialize_project(project, viewer_id=user["id"])
 
 
 @router.post("/projects/{project_id}/apply", response_model=ApplicationOut)

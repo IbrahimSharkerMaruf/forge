@@ -84,9 +84,17 @@ def create_project(owner_id: str, title: str, description: str, skills: str) -> 
         "description": description,
         "skills": skills,
         "status": "open",
+        "ratings": {},
         "created_at": now_iso(),
     }
     projects_container.create_item(project)
+    return project
+
+
+def rate_project(project: dict, user_id: str, stars: int) -> dict:
+    ratings = project.setdefault("ratings", {})
+    ratings[user_id] = stars
+    projects_container.replace_item(item=project["id"], body=project)
     return project
 
 

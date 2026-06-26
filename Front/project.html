@@ -7,7 +7,7 @@
 <script src="theme.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="shared.css?v=2">
+<link rel="stylesheet" href="shared.css?v=8">
 </head>
 <body>
 
@@ -78,8 +78,33 @@
     return me && project.owner.id === me.id;
   }
 
+  function isAdmin() {
+    return me && me.role === 'admin';
+  }
+
+  function starsHTML(avg, interactive) {
+    const rounded = Math.round(avg || 0);
+    const cls = interactive ? 'rating-stars interactive' : 'rating-stars';
+    return `<span class="${cls}">${[1, 2, 3, 4, 5].map(i => `<span class="star${i <= rounded ? ' filled' : ''}" data-star="${i}">★</span>`).join('')}</span>`;
+  }
+
   function render() {
     const skillTags = project.skills.map(s => `<span class="skill-tag">${escapeHtml(s)}</span>`).join('');
+    const ratingBlock = `
+      <div class="dash-card" style="margin-top:24px;">
+        <div class="label">Rating</div>
+        <div class="rating-widget">
+          ${starsHTML(project.avg_rating, false)}
+          <span class="rating-summary">${project.rating_count ? `${project.avg_rating} (${project.rating_count} rating${project.rating_count === 1 ? '' : 's'})` : 'No ratings yet'}</span>
+        </div>
+        ${getToken() && !isOwner() ? `
+          <div class="rating-widget" style="margin-top:10px;">
+            <span class="rating-hint">Your rating:</span>
+            ${starsHTML(project.my_rating, true)}
+          </div>
+        ` : ''}
+      </div>
+    `;
     const credited = project.credited.length
       ? `<div class="dash-card" style="margin-top:24px;">
            <div class="label">Credited contributors</div>
@@ -106,28 +131,43 @@
           </p>
         </div>
         ${isOwner() && project.status === 'open' ? '<button class="btn-secondary" id="complete-btn">Mark as completed</button>' : ''}
-        ${isOwner() ? '<button class="btn-danger" id="delete-btn">Delete project</button>' : ''}
+        ${isOwner() || isAdmin() ? '<button class="btn-danger" id="delete-btn">Delete project</button>' : ''}
       </div>
 
       <div class="project-detail-grid">
         <div>
           <div class="dash-card">
             <div class="label">Description</div>
-            <p style="color:var(--paper-dim);line-height:1.6;white-space:pre-wrap;">${escapeHtml(project.description)}</p>
+            <p style="color:var(--paper-dim);line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;">${escapeHtml(project.description)}</p>
             <div class="skill-tags" style="margin-top:16px;">${skillTags}</div>
           </div>
+          ${ratingBlock}
           ${credited}
         </div>
         <div id="side-panel"></div>
       </div>
     `;
 
+    document.getElementById('complete-btn')?.addEventListener('click', markCompleted);
+    document.getElementById('delete-btn')?.addEventListener('click', deleteProject);
+    document.querySelectorAll('.rating-widget .interactive .star').forEach(el => {
+      el.addEventListener('click', () => submitRating(Number(el.dataset.star)));
+    });
+
     if (isOwner()) {
-      document.getElementById('complete-btn')?.addEventListener('click', markCompleted);
-      document.getElementById('delete-btn').addEventListener('click', deleteProject);
       renderOwnerPanel();
     } else {
       renderVisitorPanel();
+    }
+  }
+
+  async function submitRating(stars) {
+    try {
+      await apiFetch(`/projects/${projectId}/rate`, { method: 'POST', body: JSON.stringify({ stars }) });
+      project = await apiFetch(`/projects/${projectId}`);
+      render();
+    } catch (err) {
+      alert(err.message);
     }
   }
 

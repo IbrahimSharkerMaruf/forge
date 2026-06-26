@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About — Forge</title>
+<script src="theme.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css?v=8">
+</head>
+<body>
+
+<header>
+  <nav>
+    <a href="forge_landing_page.html" class="logo">forge<span>.</span></a>
+    <div class="nav-links">
+      <a href="forge_landing_page.html#preview">Salary tool</a>
+      <a href="projects.html">Projects</a>
+      <a href="insights.html">Model Insights</a>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;" class="logged-out-only">
+      <button class="theme-toggle" id="theme-toggle-btn" type="button" aria-label="Toggle light/dark theme">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
+      <a href="login.html" class="nav-cta" id="nav-cta-btn">Log in</a>
+    </div>
+    <div class="avatar-wrap" id="avatar-wrap" style="display:none;"></div>
+  </nav>
+</header>
+
+<div class="wrap insights-shell page-glow">
+  <div class="eyebrow">About Forge</div>
+  <h1>A university dissertation project that turned into something worth using</h1>
+  <p class="lede">
+    Forge started as a salary-prediction model for a Computing Systems dissertation, and grew into a small
+    platform: a salary predictor backed by a real CatBoost model, a job search tool, and a place for students
+    to actually finish projects together instead of leaving them half-built.
+  </p>
+</div>
+
+<div class="wrap insights-shell" style="padding-top:0;">
+  <div class="insights-section" style="margin-top:0;">
+    <h2>The founder</h2>
+    <div class="dash-card" style="margin-top:18px;">
+      <div class="profile-header" style="margin-bottom:0;">
+        <span class="profile-avatar">IS</span>
+        <div>
+          <h1 style="font-size:24px;">Ibrahim Sharker Maruf</h1>
+          <p style="color:var(--paper-dim);margin-top:6px;">
+            Studying Computing Systems at Ulster University · based in London
+          </p>
+        </div>
+      </div>
+      <p style="color:var(--paper-dim);line-height:1.65;margin-top:20px;">
+        Forge is built and maintained by one person as part of a university dissertation — the model,
+        the API, and everything around it. If something looks broken or you've got an idea for it,
+        <a href="contact.html" style="color:var(--steel);">get in touch</a>.
+      </p>
+    </div>
+  </div>
+
+  <hr class="section-divider">
+
+  <div class="insights-section">
+    <h2>Why Forge exists</h2>
+    <p class="section-sub" style="margin-bottom:0;">
+      Every student has a project folder full of half-finished ideas, and a CV with nothing to show for them.
+      Forge exists to close that gap — give those ideas a place to get finished, with collaborators, and a
+      model behind it that's evaluated honestly rather than just demoed.
+    </p>
+  </div>
+</div>
+
+<script src="auth.js"></script>
+<script src="account-menu.js"></script>
+<script>
+  initThemeToggle('theme-toggle-btn');
+  setupAccountMenu();
+</script>
+</body>
+</html>

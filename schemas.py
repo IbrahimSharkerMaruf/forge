@@ -89,9 +89,16 @@ class ProjectOut(BaseModel):
     status: str
     created_at: datetime
     applicant_count: int = 0
+    avg_rating: float | None = None
+    rating_count: int = 0
+    my_rating: int | None = None
 
     class Config:
         from_attributes = True
+
+
+class RatingRequest(BaseModel):
+    stars: int = Field(ge=1, le=5)
 
 
 class ProjectDetail(ProjectOut):
