@@ -3,6 +3,7 @@ from catboost import CatBoostRegressor, Pool
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import pandas as pd
@@ -200,6 +201,11 @@ def predict_details(age: int, gender: str, education: str, job_title: str, exper
         "job_stats": job_stats,
         "counterfactuals": counterfactuals,
     }
+
+
+@app.get("/")
+def root():
+    return FileResponse("Front/forge_landing_page.html")
 
 
 # Serves the whole Front/ folder on this same origin (http://localhost:8000/...) so
