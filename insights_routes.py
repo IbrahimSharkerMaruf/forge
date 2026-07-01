@@ -18,14 +18,18 @@ from xgboost import XGBRegressor
 
 router = APIRouter()
 
-CAT_COLS = ["Gender", "Education Level", "Job Title"]
+# Education Level is now ordinal (0-3) not a category string, so it's excluded here.
+CAT_COLS = ["Gender", "Job Title"]
+EDUCATION_ORDER = {"High School": 0, "Bachelor": 1, "Master": 2, "PhD": 3}
 
 
 def _load_cleaned_data() -> pd.DataFrame:
     df = pd.read_csv("Salary_Data_larger.csv").dropna()
-    for col in CAT_COLS:
+    # Lowercase/strip the string categorical columns.
+    for col in ["Gender", "Education Level", "Job Title"]:
         df[col] = df[col].astype("string").str.lower().str.strip()
     df = df.drop_duplicates()
+    # Normalise the variant spellings found in the raw CSV.
     df["Education Level"] = df["Education Level"].replace(
         {
             "phd": "PhD",
@@ -36,6 +40,10 @@ def _load_cleaned_data() -> pd.DataFrame:
             "high school": "High School",
         }
     )
+    # Convert to ordinal int so the model treats education as ordered, not nominal.
+    df["Education Level"] = df["Education Level"].map(EDUCATION_ORDER)
+    df = df.dropna(subset=["Education Level"])
+    df["Education Level"] = df["Education Level"].astype(int)
     return df
 
 
